@@ -10,7 +10,7 @@ import {
   X, 
   Server
 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
 
 export const GenerateCorrectionModal: React.FC = () => {
   const { 

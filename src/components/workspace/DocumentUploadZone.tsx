@@ -9,7 +9,7 @@ import {
   FileUp, 
   Layers
 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
 import type { AuditDocument } from '../../types/audit';
 import { api } from '../../services/api';
 import { ProcessingTimeline } from './ProcessingTimeline';

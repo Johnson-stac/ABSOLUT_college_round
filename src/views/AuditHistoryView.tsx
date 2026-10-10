@@ -8,7 +8,7 @@ import {
   FileCheck2,
   ArrowRight
 } from 'lucide-react';
-import { useAudit } from '../context/AuditContext';
+import { useAudit } from '../context/useAudit';
 import { animatePageEntry } from '../utils/animations';
 
 export const AuditHistoryView: React.FC = () => {
@@ -42,7 +42,7 @@ export const AuditHistoryView: React.FC = () => {
             createNewSession();
             setScreen('new-audit');
           }}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
         >
           <span>New Audit Intake</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -54,16 +54,16 @@ export const AuditHistoryView: React.FC = () => {
         <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
-          placeholder="Filter audits by title or topic..."
+          placeholder="Filter audits by title or domain..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-2xs"
         />
       </div>
 
       {/* History Items Grid */}
       {filteredHistory.length === 0 ? (
-        <div className="surface-card rounded-xl p-12 text-center bg-white border border-slate-200">
+        <div className="surface-card rounded-2xl p-12 text-center bg-white border border-slate-200/90 shadow-xs">
           <History className="w-10 h-10 text-slate-300 mx-auto mb-3" />
           <h4 className="text-sm font-semibold text-slate-700 m-0">No historical audits found</h4>
           <p className="text-xs text-slate-400 mt-1">Start a new audit or change your filter search terms.</p>
@@ -73,17 +73,17 @@ export const AuditHistoryView: React.FC = () => {
           {filteredHistory.map((item) => (
             <div
               key={item.id}
-              className="surface-card surface-card-hover rounded-xl p-5 bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="surface-card surface-card-hover rounded-2xl p-5 bg-white border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
             >
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="flex items-start gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-sm font-bold text-slate-900 truncate m-0">
                     {item.title}
                   </h4>
-                  <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500">
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-slate-400" />
                       {new Date(item.createdAt).toLocaleDateString()}
@@ -92,6 +92,17 @@ export const AuditHistoryView: React.FC = () => {
                     <span>{item.wordCount} words in answer</span>
                     <span>•</span>
                     <span>{item.documentCount} PDF source{item.documentCount !== 1 ? 's' : ''}</span>
+                    {item.truthfulnessScore !== undefined && (
+                      <>
+                        <span>•</span>
+                        <span className={`font-mono font-bold ${
+                          item.truthfulnessScore >= 70 ? 'text-emerald-700' :
+                          item.truthfulnessScore >= 50 ? 'text-amber-700' : 'text-rose-700'
+                        }`}>
+                          {item.truthfulnessScore}% Factual Grounding
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

@@ -11,11 +11,13 @@ import {
   ArrowLeft, 
   X, 
   ShieldAlert, 
-  BookOpen
+  BookOpen,
+  BrainCircuit,
+  AlertTriangle,
+  Scale
 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
 import type { EvidenceExcerpt } from '../../types/audit';
-
 
 interface ClaimEvidenceInspectorProps {
   isMobileModal?: boolean;
@@ -29,7 +31,8 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
   const { 
     currentSession, 
     selectedClaimId, 
-    setSelectedClaimId 
+    goToNextClaim,
+    goToPrevClaim
   } = useAudit();
 
   const [copiedClaim, setCopiedClaim] = useState(false);
@@ -51,27 +54,15 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
     setTimeout(() => setCopiedEvidenceId(null), 2000);
   };
 
-  // Previous and Next claim navigation
   const currentIndex = claims.findIndex(c => c.id === selectedClaim?.id);
-  const handlePrev = () => {
-    if (claims.length === 0) return;
-    const prevIdx = currentIndex > 0 ? currentIndex - 1 : claims.length - 1;
-    setSelectedClaimId(claims[prevIdx].id);
-  };
-
-  const handleNext = () => {
-    if (claims.length === 0) return;
-    const nextIdx = currentIndex < claims.length - 1 ? currentIndex + 1 : 0;
-    setSelectedClaimId(claims[nextIdx].id);
-  };
 
   if (!selectedClaim) {
     return (
-      <div className="surface-card rounded-xl p-8 bg-white border border-slate-200 flex flex-col items-center justify-center text-center h-full text-slate-400">
+      <div className="surface-card rounded-2xl p-8 bg-white border border-slate-200/90 flex flex-col items-center justify-center text-center h-full text-slate-400">
         <BookOpen className="w-10 h-10 text-slate-300 mb-3 stroke-[1.5]" />
         <h4 className="text-sm font-semibold text-slate-700 m-0">No Claim Selected</h4>
         <p className="text-xs text-slate-400 mt-1 max-w-xs">
-          Click any highlighted statement in the answer reader to inspect citations and supporting evidence.
+          Click any highlighted statement in the answer reader to inspect citations, reasoning checks, and source passages.
         </p>
       </div>
     );
@@ -83,14 +74,14 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-            <span>SUPPORTED (FACTUAL)</span>
+            <span>SUPPORTED</span>
           </span>
         );
       case 'refuted':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
             <XCircle className="w-3.5 h-3.5 text-rose-700" />
-            <span>REFUTED (CONTRADICTED)</span>
+            <span>REFUTED</span>
           </span>
         );
       case 'insufficient_evidence':
@@ -104,9 +95,46 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300">
             <AlertOctagon className="w-3.5 h-3.5 text-purple-700" />
-            <span>AMBIGUOUS / CONFLICTING</span>
+            <span>AMBIGUOUS</span>
           </span>
         );
+    }
+  };
+
+  const getErrorCategoryBadge = () => {
+    if (!selectedClaim.errorCategory || selectedClaim.errorCategory === 'none') return null;
+
+    switch (selectedClaim.errorCategory) {
+      case 'hallucinated_fact':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <AlertTriangle className="w-3 h-3 text-rose-600" />
+            <span>Hallucinated Fact</span>
+          </span>
+        );
+      case 'logical_inconsistency':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <BrainCircuit className="w-3 h-3 text-indigo-600" />
+            <span>Logical Inconsistency</span>
+          </span>
+        );
+      case 'unsafe_recommendation':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-800 border border-red-300 animate-pulse">
+            <ShieldAlert className="w-3 h-3 text-red-600" />
+            <span>Unsafe Recommendation</span>
+          </span>
+        );
+      case 'unsupported_claim':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <HelpCircle className="w-3 h-3 text-amber-600" />
+            <span>Unsupported Scope</span>
+          </span>
+        );
+      default:
+        return null;
     }
   };
 
@@ -115,28 +143,24 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
 
   return (
     <div className={`
-      surface-card rounded-xl bg-white border border-slate-200 flex flex-col h-full overflow-hidden
+      surface-card rounded-2xl bg-white border border-slate-200/90 flex flex-col h-full overflow-hidden shadow-xs
       ${isMobileModal ? 'fixed inset-4 z-50 shadow-2xl max-w-xl mx-auto my-auto max-h-[90vh]' : ''}
     `}>
-      {/* Header with Claim Index, Verdict, and Prev/Next */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+      {/* Header with Claim Index, Verdict, and Controls */}
+      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
             Claim C{selectedClaim.claimNumber}
           </span>
           {getVerdictBadge()}
-          {selectedClaim.confidence !== undefined && (
-            <span className="text-[11px] font-medium text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-              {Math.round(selectedClaim.confidence * 100)}% Confidence
-            </span>
-          )}
+          {getErrorCategoryBadge()}
         </div>
 
         {/* Prev / Next / Close controls */}
         <div className="flex items-center gap-1">
           <button
-            onClick={handlePrev}
-            className="p-1.5 rounded-md hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+            onClick={goToPrevClaim}
+            className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
             title="Previous claim"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -145,8 +169,8 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
             {currentIndex + 1}/{claims.length}
           </span>
           <button
-            onClick={handleNext}
-            className="p-1.5 rounded-md hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+            onClick={goToNextClaim}
+            className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
             title="Next claim"
           >
             <ArrowRight className="w-4 h-4" />
@@ -155,7 +179,7 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
           {isMobileModal && (
             <button
               onClick={onCloseMobile}
-              className="p-1.5 ml-2 rounded-md hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
+              className="p-1.5 ml-2 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -164,7 +188,7 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
       </div>
 
       {/* Body Content */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
         {/* 1. Exact Claim Text Card */}
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 relative group">
           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
@@ -173,7 +197,7 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
               onClick={handleCopyClaim}
               className="flex items-center gap-1 text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
             >
-              {copiedClaim ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+              {copiedClaim ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-400" />}
               <span>{copiedClaim ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
@@ -182,22 +206,90 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
           </p>
         </div>
 
-        {/* 2. Model Verification Verdict & Explanation */}
+        {/* 2. Safety Risk Alert (if critical or moderate) */}
+        {selectedClaim.safetyRisk && selectedClaim.safetyRisk !== 'none' && (
+          <div className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
+            selectedClaim.safetyRisk === 'critical' 
+              ? 'bg-rose-50/90 border-rose-300 text-rose-950' 
+              : 'bg-amber-50/90 border-amber-300 text-amber-950'
+          }`}>
+            <ShieldAlert className={`w-4 h-4 shrink-0 mt-0.5 ${
+              selectedClaim.safetyRisk === 'critical' ? 'text-rose-600' : 'text-amber-600'
+            }`} />
+            <div>
+              <span className="font-bold uppercase tracking-wider text-[11px] block">
+                {selectedClaim.safetyRisk} Risk Alert: {selectedClaim.errorCategory === 'unsafe_recommendation' ? 'Potentially Hazardous Instruction' : 'High Risk Error'}
+              </span>
+              <p className="m-0 mt-0.5 text-xs opacity-90 leading-normal">
+                This claim contains actionable statements that violate ground truth standards or guidance. It must not be deployed without correction.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Reasoning Consistency Analysis */}
+        {selectedClaim.reasoningCheck?.hasLogicalFlaw && (
+          <div className="p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-200/90 text-xs text-indigo-950 space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-indigo-900">
+              <BrainCircuit className="w-4 h-4 text-indigo-600" />
+              <span>Reasoning Consistency Check: {selectedClaim.reasoningCheck.flawType?.replace(/_/g, ' ').toUpperCase()}</span>
+            </div>
+            <p className="m-0 text-indigo-900/90 leading-normal">
+              {selectedClaim.reasoningCheck.explanation || 'The conclusion stated does not logically follow from the provided evidence premises.'}
+            </p>
+          </div>
+        )}
+
+        {/* 4. Confidence-Calibrated Reporting */}
+        {selectedClaim.confidenceCalibration && (
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                <Scale className="w-3.5 h-3.5 text-slate-400" />
+                <span>Confidence Calibration</span>
+              </span>
+              <span className="font-mono font-bold text-slate-900">
+                {Math.round(selectedClaim.confidenceCalibration.score * 100)}% Certainty
+              </span>
+            </div>
+            {/* Uncertainty Interval bar */}
+            <div className="space-y-1">
+              <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div 
+                  className="bg-blue-600 h-1.5 rounded-full"
+                  style={{ width: `${selectedClaim.confidenceCalibration.score * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                <span>Bound: {selectedClaim.confidenceCalibration.uncertaintyInterval[0]}</span>
+                <span className="capitalize">{selectedClaim.confidenceCalibration.calibrationLevel.replace(/_/g, ' ')}</span>
+                <span>Upper: {selectedClaim.confidenceCalibration.uncertaintyInterval[1]}</span>
+              </div>
+            </div>
+            {selectedClaim.confidenceCalibration.epistemicCaveat && (
+              <p className="text-[11px] text-slate-500 m-0 italic">
+                {selectedClaim.confidenceCalibration.epistemicCaveat}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* 5. Verdict Explanation */}
         <div className="space-y-1.5">
-          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider m-0 flex items-center gap-1.5">
-            <span>Verdict Assessment & Synthesis</span>
+          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider m-0">
+            Evidential Justification
           </h4>
-          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed p-3.5 rounded-lg bg-slate-50 border border-slate-200/80 m-0">
+          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 m-0">
             {selectedClaim.explanation}
           </p>
         </div>
 
-        {/* 3. Reason for Insufficient Evidence if applicable */}
+        {/* 6. Insufficient Reason if applicable */}
         {selectedClaim.verdict === 'insufficient_evidence' && (
-          <div className="p-3.5 rounded-lg bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
+          <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
             <div className="font-bold flex items-center gap-1.5">
               <HelpCircle className="w-4 h-4 text-amber-600" />
-              <span>Evidence Limitation Notice</span>
+              <span>Evidence Boundary Notice</span>
             </div>
             <p className="m-0 leading-normal text-amber-800">
               {selectedClaim.insufficientReason || 'The supplied documents do not contain direct or inferable evidence to substantiate or disprove this statement.'}
@@ -205,9 +297,9 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
           </div>
         )}
 
-        {/* 4. Ambiguity / Conflict Reason if applicable */}
+        {/* 7. Ambiguity Notice */}
         {selectedClaim.verdict === 'ambiguous' && selectedClaim.ambiguityReason && (
-          <div className="p-3.5 rounded-lg bg-purple-50/80 border border-purple-200 text-xs text-purple-900 space-y-1">
+          <div className="p-3.5 rounded-xl bg-purple-50/80 border border-purple-200 text-xs text-purple-900 space-y-1">
             <div className="font-bold flex items-center gap-1.5">
               <AlertOctagon className="w-4 h-4 text-purple-600" />
               <span>Source Ambiguity Notice</span>
@@ -218,22 +310,19 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
           </div>
         )}
 
-        {/* 5. Contradicting Evidence Excerpts (Red Alert) */}
+        {/* 8. Contradicting Evidence Excerpts */}
         {hasContradicting && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wider m-0 flex items-center gap-1.5">
-                <XCircle className="w-4 h-4 text-rose-600" />
-                <span>Contradicting Evidence ({selectedClaim.contradictingEvidence.length})</span>
-              </h4>
-            </div>
+            <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wider m-0 flex items-center gap-1.5">
+              <XCircle className="w-4 h-4 text-rose-600" />
+              <span>Contradicting Ground Truth ({selectedClaim.contradictingEvidence.length})</span>
+            </h4>
 
             {selectedClaim.contradictingEvidence.map((ev) => (
               <div 
                 key={ev.id}
                 className="p-4 rounded-xl bg-rose-50/70 border border-rose-200 shadow-2xs space-y-2.5"
               >
-                {/* Source Metadata Banner */}
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-rose-200/60 pb-2">
                   <div className="flex items-center gap-1.5 font-medium text-rose-900">
                     <FileText className="w-3.5 h-3.5 text-rose-600" />
@@ -261,7 +350,6 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
                   </div>
                 </div>
 
-                {/* Excerpt Quote */}
                 <blockquote className="m-0 pl-3 border-l-2 border-rose-400 font-mono text-xs text-rose-950 leading-relaxed whitespace-pre-wrap">
                   "{ev.text}"
                 </blockquote>
@@ -276,22 +364,19 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
           </div>
         )}
 
-        {/* 6. Supporting Evidence Excerpts (Green) */}
+        {/* 9. Supporting Evidence Excerpts */}
         {hasSupporting && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider m-0 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Supporting Evidence ({selectedClaim.supportingEvidence.length})</span>
-              </h4>
-            </div>
+            <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider m-0 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Supporting Ground Truth ({selectedClaim.supportingEvidence.length})</span>
+            </h4>
 
             {selectedClaim.supportingEvidence.map((ev) => (
               <div 
                 key={ev.id}
                 className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 shadow-2xs space-y-2.5"
               >
-                {/* Source Metadata Banner */}
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-emerald-200/60 pb-2">
                   <div className="flex items-center gap-1.5 font-medium text-emerald-900">
                     <FileText className="w-3.5 h-3.5 text-emerald-600" />
@@ -319,7 +404,6 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
                   </div>
                 </div>
 
-                {/* Excerpt Quote */}
                 <blockquote className="m-0 pl-3 border-l-2 border-emerald-400 font-mono text-xs text-emerald-950 leading-relaxed whitespace-pre-wrap">
                   "{ev.text}"
                 </blockquote>
@@ -334,7 +418,7 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
           </div>
         )}
 
-        {/* 7. Clear indication when no reliable evidence was found */}
+        {/* 10. Fallback when no direct quotes */}
         {!hasSupporting && !hasContradicting && (
           <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-center text-xs text-slate-500 space-y-1">
             <ShieldAlert className="w-5 h-5 text-slate-400 mx-auto" />
@@ -347,9 +431,9 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
       </div>
 
       {/* Footer Navigation */}
-      <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+      <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-xs text-slate-500">
         <button
-          onClick={handlePrev}
+          onClick={goToPrevClaim}
           className="flex items-center gap-1 font-semibold text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -361,7 +445,7 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
         </span>
 
         <button
-          onClick={handleNext}
+          onClick={goToNextClaim}
           className="flex items-center gap-1 font-semibold text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
         >
           <span>Next Claim</span>

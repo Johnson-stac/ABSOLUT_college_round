@@ -215,10 +215,21 @@ export const api = {
     const isLegalScenario = originalAnswer.includes('EU AI Act') || originalAnswer.includes('Regulation 2024/1689');
     const legalPreset = isLegalScenario ? SAMPLE_PRESETS.find(p => p.id === 'legal-eu-ai-act') : undefined;
 
-
     if (legalPreset) {
       return {
         ...legalPreset.verificationResult,
+        auditId,
+        verifiedAt: new Date().toISOString(),
+        isSimulated: true,
+      };
+    }
+
+    const isFinancialScenario = originalAnswer.includes('NVIDIA Corporation') || originalAnswer.includes('Hopper architecture') || originalAnswer.includes('Blackwell');
+    const financialPreset = isFinancialScenario ? SAMPLE_PRESETS.find(p => p.id === 'financial-nvidia-earnings') : undefined;
+
+    if (financialPreset) {
+      return {
+        ...financialPreset.verificationResult,
         auditId,
         verifiedAt: new Date().toISOString(),
         isSimulated: true,
@@ -232,13 +243,29 @@ export const api = {
       .filter(s => s.length > 15);
 
     let currentOffset = 0;
-    const generatedClaims = rawSentences.map((sentence, index) => {
+    const generatedClaims: VerifiedClaim[] = rawSentences.map((sentence, index) => {
       const start = originalAnswer.indexOf(sentence, currentOffset);
       const end = start !== -1 ? start + sentence.length : currentOffset + sentence.length;
       if (start !== -1) currentOffset = end;
 
-      // Assign alternating realistic verdicts for demonstration
-      const verdict = index % 3 === 0 ? 'supported' : index % 3 === 1 ? 'refuted' : 'insufficient_evidence';
+      // Assign realistic verdicts & error categories for demonstration
+      const isRefuted = index % 3 === 1;
+      const isInsufficient = index % 3 === 2;
+      const verdict = isRefuted ? 'refuted' : isInsufficient ? 'insufficient_evidence' : 'supported';
+
+      // Detect potential reasoning or safety risk cues from text
+      const hasReasoningRisk = /because|therefore|consequently|guarantees|impossible|always/i.test(sentence);
+      const hasSafetyRisk = /mg|dosage|invest|stop-loss|eliminate|critical|bypass/i.test(sentence);
+
+      const errorCategory = isRefuted
+        ? (hasSafetyRisk ? 'unsafe_recommendation' : hasReasoningRisk ? 'logical_inconsistency' : 'hallucinated_fact')
+        : isInsufficient
+        ? 'unsupported_claim'
+        : 'none';
+
+      const safetyRisk = (isRefuted && hasSafetyRisk) ? 'critical' : isRefuted ? 'moderate' : 'none';
+
+      const confScore = verdict === 'supported' ? 0.98 : verdict === 'refuted' ? 0.95 : 0.88;
 
       return {
         id: `claim-custom-${index + 1}`,
@@ -247,7 +274,24 @@ export const api = {
         startOffset: start !== -1 ? start : 0,
         endOffset: end,
         verdict: verdict as 'supported' | 'refuted' | 'insufficient_evidence',
-        confidence: 0.92,
+        errorCategory,
+        safetyRisk,
+        confidence: confScore,
+        confidenceCalibration: {
+          score: confScore,
+          calibrationLevel: confScore >= 0.95 ? 'high_certainty' : 'moderate_certainty',
+          uncertaintyInterval: [confScore - 0.04, Math.min(1, confScore + 0.02)],
+          epistemicCaveat: verdict === 'supported'
+            ? 'Corroborated by semantic citation alignment.'
+            : verdict === 'refuted'
+            ? 'Direct evidential contradiction localized.'
+            : 'Unverifiable within provided source context.',
+        },
+        reasoningCheck: {
+          hasLogicalFlaw: hasReasoningRisk && isRefuted,
+          flawType: hasReasoningRisk && isRefuted ? 'non_sequitur' : 'none',
+          explanation: hasReasoningRisk && isRefuted ? 'Inference does not follow logically from documented premise.' : undefined,
+        },
         explanation: verdict === 'supported' 
           ? 'Supported by semantic alignment with document passages.'
           : verdict === 'refuted'
@@ -299,6 +343,10 @@ export const api = {
     const suppCount = generatedClaims.filter(c => c.verdict === 'supported').length;
     const refCount = generatedClaims.filter(c => c.verdict === 'refuted').length;
     const insCount = generatedClaims.filter(c => c.verdict === 'insufficient_evidence').length;
+    const hallCount = generatedClaims.filter(c => c.errorCategory === 'hallucinated_fact').length;
+    const logCount = generatedClaims.filter(c => c.errorCategory === 'logical_inconsistency').length;
+    const unsafeCount = generatedClaims.filter(c => c.errorCategory === 'unsafe_recommendation').length;
+    const avgConf = generatedClaims.reduce((acc, c) => acc + (c.confidence || 0.9), 0) / (generatedClaims.length || 1);
 
     return {
       auditId,
@@ -310,8 +358,12 @@ export const api = {
         refutedCount: refCount,
         insufficientCount: insCount,
         ambiguousCount: 0,
+        hallucinationsCount: hallCount,
+        logicalInconsistenciesCount: logCount,
+        unsafeRecommendationsCount: unsafeCount,
         overallStatus: refCount > 0 ? 'critical_issues_found' : 'passed',
         truthfulnessScore: Math.round((suppCount / (generatedClaims.length || 1)) * 100),
+        averageConfidence: Number(avgConf.toFixed(2)),
       },
       claims: generatedClaims,
       isSimulated: true,
@@ -527,6 +579,17 @@ export const api = {
       };
     }
 
+    const nvdaPreset = SAMPLE_PRESETS.find(p => p.id === 'financial-nvidia-earnings');
+    if (nvdaPreset && (originalAnswer.includes('NVIDIA Corporation') || originalAnswer.includes('Blackwell') || originalAnswer.includes('Hopper'))) {
+      return {
+        ...nvdaPreset.correctionResult,
+        auditId,
+        generatedAt: new Date().toISOString(),
+        modelUsed: 'gemini-1.5-pro (verified SEC financial test fixture)',
+        isSimulated: true,
+      };
+    }
+
     const defaultPreset = SAMPLE_PRESETS[0];
     return {
       ...defaultPreset.correctionResult,
@@ -577,16 +640,20 @@ export const api = {
 **Date:** ${new Date(verification.verifiedAt).toLocaleString()}
 **Overall Status:** ${summary.overallStatus.toUpperCase()}
 **Truthfulness Score:** ${summary.truthfulnessScore}%
+**Average Calibrated Confidence:** ${summary.averageConfidence ? `${Math.round(summary.averageConfidence * 100)}%` : '96%'}
 
 ---
 
-## 1. Executive Summary
+## 1. Executive Summary & Diagnostic Breakdown
 - **Original Word Count:** ${session.wordCount} words
 - **Total Claims Audited:** ${summary.totalClaims}
-- **Supported Claims:** ${summary.supportedCount}
-- **Refuted Claims (Hallucinations):** ${summary.refutedCount}
+- **Supported (Factual) Claims:** ${summary.supportedCount}
+- **Refuted (Hallucinations) Claims:** ${summary.refutedCount}
 - **Insufficient Evidence Claims:** ${summary.insufficientCount}
 ${summary.ambiguousCount ? `- **Ambiguous Claims:** ${summary.ambiguousCount}\n` : ''}
+${summary.hallucinationsCount !== undefined ? `- **Direct Hallucinations:** ${summary.hallucinationsCount}\n` : ''}
+${summary.logicalInconsistenciesCount !== undefined ? `- **Logical Inconsistencies & Fallacies:** ${summary.logicalInconsistenciesCount}\n` : ''}
+${summary.unsafeRecommendationsCount !== undefined ? `- **Potentially Unsafe Recommendations:** ${summary.unsafeRecommendationsCount}\n` : ''}
 
 ---
 
@@ -595,15 +662,19 @@ ${session.documents.map((d, i) => `${i + 1}. **${d.name}** (${(d.size / 1024).to
 
 ---
 
-## 3. Claim-by-Claim Verification
+## 3. Claim-by-Claim Verification & Evidence Grounding
 ${verification.claims.map(c => `
 ### Claim C${c.claimNumber} [${c.verdict.toUpperCase()}]
 > "${c.text}"
 
 - **Verdict:** ${c.verdict.toUpperCase()} ${c.confidence ? `(${Math.round(c.confidence * 100)}% confidence)` : ''}
+${c.errorCategory && c.errorCategory !== 'none' ? `- **Error Category:** ${c.errorCategory.replace(/_/g, ' ').toUpperCase()}` : ''}
+${c.safetyRisk && c.safetyRisk !== 'none' ? `- **Safety Risk Level:** ${c.safetyRisk.toUpperCase()}` : ''}
+${c.reasoningCheck?.hasLogicalFlaw ? `- **Reasoning Flaw Detected:** ${c.reasoningCheck.flawType?.replace(/_/g, ' ')} (${c.reasoningCheck.explanation})` : ''}
+${c.confidenceCalibration ? `- **Calibrated Confidence:** ${Math.round(c.confidenceCalibration.score * 100)}% (${c.confidenceCalibration.calibrationLevel.replace(/_/g, ' ')}) [Interval: ${c.confidenceCalibration.uncertaintyInterval[0]} - ${c.confidenceCalibration.uncertaintyInterval[1]}]` : ''}
 - **Explanation:** ${c.explanation}
-${c.supportingEvidence.length ? `- **Supporting Citation:** ${c.supportingEvidence.map(e => `Page ${e.source.pageNumber || 1} ("${e.text.slice(0, 100)}...")`).join('; ')}` : ''}
-${c.contradictingEvidence.length ? `- **Contradicting Citation:** ${c.contradictingEvidence.map(e => `Page ${e.source.pageNumber || 1} ("${e.text.slice(0, 100)}...")`).join('; ')}` : ''}
+${c.supportingEvidence.length ? `- **Supporting Citations:**\n${c.supportingEvidence.map(e => `  - *${e.source.documentName}* (Page ${e.source.pageNumber || 1}, ${e.source.section || 'General'}): "${e.text}"`).join('\n')}` : ''}
+${c.contradictingEvidence.length ? `- **Contradicting Citations:**\n${c.contradictingEvidence.map(e => `  - *${e.source.documentName}* (Page ${e.source.pageNumber || 1}, ${e.source.section || 'General'}): "${e.text}"`).join('\n')}` : ''}
 ${c.insufficientReason ? `- **Missing Evidence Note:** ${c.insufficientReason}` : ''}
 `).join('\n')}
 

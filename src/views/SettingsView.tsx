@@ -8,7 +8,7 @@ import {
   Copy, 
   Check 
 } from 'lucide-react';
-import { useAudit } from '../context/AuditContext';
+import { useAudit } from '../context/useAudit';
 import { api } from '../services/api';
 import { animatePageEntry } from '../utils/animations';
 

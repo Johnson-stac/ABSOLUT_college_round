@@ -50,6 +50,32 @@ export type ClaimVerdict =
   | 'insufficient_evidence' 
   | 'ambiguous';
 
+export type ClaimErrorCategory = 
+  | 'none'
+  | 'hallucinated_fact'
+  | 'unsupported_claim'
+  | 'logical_inconsistency'
+  | 'unsafe_recommendation';
+
+export type SafetyRiskLevel = 
+  | 'none'
+  | 'low'
+  | 'moderate'
+  | 'critical';
+
+export interface ReasoningCheck {
+  hasLogicalFlaw: boolean;
+  flawType?: 'none' | 'non_sequitur' | 'unwarranted_generalization' | 'contradictory_premises' | 'circular_reasoning';
+  explanation?: string;
+}
+
+export interface ConfidenceCalibration {
+  score: number; // 0.0 - 1.0
+  calibrationLevel: 'high_certainty' | 'moderate_certainty' | 'tentative' | 'uncalibrated';
+  uncertaintyInterval: [number, number]; // e.g. [0.91, 0.98]
+  epistemicCaveat?: string;
+}
+
 export interface SourceReference {
   documentId: string;
   documentName: string;
@@ -73,6 +99,10 @@ export interface VerifiedClaim {
   startOffset: number;
   endOffset: number;
   verdict: ClaimVerdict;
+  errorCategory?: ClaimErrorCategory;
+  safetyRisk?: SafetyRiskLevel;
+  reasoningCheck?: ReasoningCheck;
+  confidenceCalibration?: ConfidenceCalibration;
   explanation: string;
   confidence?: number; // 0.0 - 1.0
   supportingEvidence: EvidenceExcerpt[];
@@ -95,8 +125,12 @@ export interface AuditVerificationSummary {
   refutedCount: number;
   insufficientCount: number;
   ambiguousCount: number;
+  hallucinationsCount?: number;
+  logicalInconsistenciesCount?: number;
+  unsafeRecommendationsCount?: number;
   overallStatus: OverallAuditVerdictStatus;
   truthfulnessScore: number; // 0 - 100
+  averageConfidence?: number; // 0.0 - 1.0
   durationMs?: number;
 }
 

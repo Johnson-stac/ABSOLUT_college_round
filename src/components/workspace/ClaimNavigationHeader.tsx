@@ -6,11 +6,11 @@ import {
   Cpu, 
   Loader2,
   Filter,
-  Sparkles
+  Sparkles,
+  Clock
 } from 'lucide-react';
-
-import { useAudit } from '../../context/AuditContext';
-import type { ClaimFilterType } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
+import type { ClaimFilterType } from '../../context/auditContextDef';
 
 export const ClaimNavigationHeader: React.FC = () => {
   const { 
@@ -33,6 +33,10 @@ export const ClaimNavigationHeader: React.FC = () => {
   const insufficientCount = summary?.insufficientCount ?? claims.filter(c => c.verdict === 'insufficient_evidence').length;
   const ambiguousCount = summary?.ambiguousCount ?? claims.filter(c => c.verdict === 'ambiguous').length;
 
+  const hallucinationsCount = summary?.hallucinationsCount ?? claims.filter(c => c.errorCategory === 'hallucinated_fact').length;
+  const reasoningCount = summary?.logicalInconsistenciesCount ?? claims.filter(c => c.reasoningCheck?.hasLogicalFlaw || c.errorCategory === 'logical_inconsistency').length;
+  const safetyCount = summary?.unsafeRecommendationsCount ?? claims.filter(c => c.safetyRisk === 'critical' || c.safetyRisk === 'moderate' || c.errorCategory === 'unsafe_recommendation').length;
+
   const filterButtons: { id: ClaimFilterType; label: string; count: number; activeClass: string }[] = [
     { id: 'all', label: 'All Claims', count: totalCount, activeClass: 'bg-slate-900 text-white' },
     { id: 'supported', label: 'Supported', count: supportedCount, activeClass: 'bg-emerald-600 text-white' },
@@ -49,21 +53,48 @@ export const ClaimNavigationHeader: React.FC = () => {
     });
   }
 
+  if (hallucinationsCount > 0) {
+    filterButtons.push({
+      id: 'hallucinations',
+      label: 'Hallucinations',
+      count: hallucinationsCount,
+      activeClass: 'bg-rose-700 text-white ring-2 ring-rose-300',
+    });
+  }
+
+  if (reasoningCount > 0) {
+    filterButtons.push({
+      id: 'reasoning_flaws',
+      label: 'Logic Flaws',
+      count: reasoningCount,
+      activeClass: 'bg-indigo-600 text-white ring-2 ring-indigo-300',
+    });
+  }
+
+  if (safetyCount > 0) {
+    filterButtons.push({
+      id: 'safety_risks',
+      label: 'Safety Risks',
+      count: safetyCount,
+      activeClass: 'bg-red-600 text-white ring-2 ring-red-300 animate-pulse',
+    });
+  }
+
   const getOverallBadge = () => {
     if (!result) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
-          <ClockIcon />
+          <Clock className="w-3.5 h-3.5 text-slate-400" />
           <span>Audit Pending</span>
         </span>
       );
     }
 
-    if (summary?.refutedCount && summary.refutedCount > 0) {
+    if (safetyCount > 0 || (summary?.refutedCount && summary.refutedCount > 0)) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
           <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-          <span>Critical Discrepancies ({summary.refutedCount} refuted)</span>
+          <span>Critical Discrepancies ({summary?.refutedCount || 0} refuted{safetyCount > 0 ? `, ${safetyCount} safety alerts` : ''})</span>
         </span>
       );
     }
@@ -86,7 +117,7 @@ export const ClaimNavigationHeader: React.FC = () => {
   };
 
   return (
-    <div className="surface-card rounded-xl p-5 bg-white border border-slate-200 space-y-4">
+    <div className="surface-card rounded-2xl p-5 bg-white border border-slate-200/90 shadow-xs space-y-4">
       {/* Top Row: Overall Statistics & Action */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-100">
         <div className="flex flex-wrap items-center gap-3">
@@ -105,7 +136,6 @@ export const ClaimNavigationHeader: React.FC = () => {
 
         {/* Action Buttons Group */}
         <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
-          {/* Phase 4: Generate Corrected Answer with Gemini Button */}
           {result && (
             <button
               onClick={openCorrectionModal}
@@ -127,7 +157,6 @@ export const ClaimNavigationHeader: React.FC = () => {
             </button>
           )}
 
-          {/* Verification Trigger Button */}
           <button
             onClick={runVerification}
             disabled={isVerifying || currentSession.documents.length === 0}
@@ -149,40 +178,48 @@ export const ClaimNavigationHeader: React.FC = () => {
       </div>
 
       {/* Statistics Metric Tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80">
-          <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Total Claims</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Total Claims</span>
           <div className="text-xl font-bold text-slate-900 mt-0.5">{totalCount}</div>
         </div>
 
-        <div className="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200/60">
-          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Supported</span>
+        <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70">
+          <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wider block">Supported</span>
           <div className="text-xl font-bold text-emerald-900 mt-0.5">{supportedCount}</div>
         </div>
 
-        <div className="p-3 rounded-lg bg-rose-50/60 border border-rose-200/60">
-          <span className="text-[11px] font-semibold text-rose-700 uppercase tracking-wider">Refuted</span>
+        <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70">
+          <span className="text-[10px] font-semibold text-rose-700 uppercase tracking-wider block">Refuted</span>
           <div className="text-xl font-bold text-rose-900 mt-0.5">{refutedCount}</div>
         </div>
 
-        <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200/60">
-          <span className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Insufficient</span>
+        <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/70">
+          <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider block">Insufficient</span>
           <div className="text-xl font-bold text-amber-900 mt-0.5">{insufficientCount}</div>
         </div>
 
-        {ambiguousCount > 0 && (
-          <div className="p-3 rounded-lg bg-purple-50/60 border border-purple-200/60">
-            <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Ambiguous</span>
-            <div className="text-xl font-bold text-purple-900 mt-0.5">{ambiguousCount}</div>
-          </div>
-        )}
+        <div className="p-3 rounded-xl bg-rose-100/60 border border-rose-300/70">
+          <span className="text-[10px] font-semibold text-rose-800 uppercase tracking-wider block">Hallucinations</span>
+          <div className="text-xl font-bold text-rose-950 mt-0.5">{hallucinationsCount}</div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200/70">
+          <span className="text-[10px] font-semibold text-indigo-700 uppercase tracking-wider block">Logic Flaws</span>
+          <div className="text-xl font-bold text-indigo-900 mt-0.5">{reasoningCount}</div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-red-50/70 border border-red-200/70">
+          <span className="text-[10px] font-semibold text-red-700 uppercase tracking-wider block">Safety Risks</span>
+          <div className="text-xl font-bold text-red-900 mt-0.5">{safetyCount}</div>
+        </div>
       </div>
 
       {/* Filter Buttons Row */}
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mr-1">
           <Filter className="w-3.5 h-3.5" />
-          <span>Filter View:</span>
+          <span>Filter Claims:</span>
         </span>
 
         {filterButtons.map((btn) => {
@@ -212,10 +249,3 @@ export const ClaimNavigationHeader: React.FC = () => {
     </div>
   );
 };
-
-const ClockIcon = () => (
-  <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <circle cx="12" cy="12" r="10" strokeWidth="2" />
-    <path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2" />
-  </svg>
-);

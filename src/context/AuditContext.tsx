@@ -1,85 +1,30 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { 
   AuditSession, 
   AuditDocument, 
   AuditHistorySummary, 
   BackendHealthResponse,
-  AuditVerificationResult,
-  ClaimVerdict
+  AuditVerificationResult
 } from '../types/audit';
 import { api } from '../services/api';
 import { SAMPLE_PRESETS } from '../data/sampleAnswers';
+import { 
+  AuditContext,
+  type ScreenType,
+  type ClaimFilterType,
+  type CorrectionErrorState
+} from './auditContextDef';
 
-export type ScreenType = 'dashboard' | 'new-audit' | 'workspace' | 'report' | 'comparison' | 'correction' | 'history' | 'settings';
-export type ClaimFilterType = 'all' | ClaimVerdict;
-
-export interface CorrectionErrorState {
-  message: string;
-  status: number;
-  isOffline?: boolean;
-  isRateLimited?: boolean;
-  details?: string;
-}
-
-interface AuditContextType {
-  currentScreen: ScreenType;
-  setScreen: (screen: ScreenType) => void;
-  currentSession: AuditSession;
-  history: AuditHistorySummary[];
-  backendHealth: BackendHealthResponse | null;
-  isCheckingBackend: boolean;
-  isVerifying: boolean;
-  isGeneratingCorrection: boolean;
-  correctionError: CorrectionErrorState | null;
-  isCorrectionModalOpen: boolean;
-  openCorrectionModal: () => void;
-  closeCorrectionModal: () => void;
-  clearCorrectionError: () => void;
-  selectedClaimId: string | null;
-  setSelectedClaimId: (id: string | null) => void;
-  claimFilter: ClaimFilterType;
-  setClaimFilter: (filter: ClaimFilterType) => void;
-  checkBackendStatus: () => Promise<void>;
-  updateOriginalAnswer: (text: string) => void;
-  addDocument: (doc: AuditDocument) => void;
-  updateDocument: (id: string, updates: Partial<AuditDocument>) => void;
-  removeDocument: (id: string) => void;
-  loadSamplePreset: (presetId: string) => void;
-  clearCurrentAnswer: () => void;
-  createNewSession: () => void;
-  loadSessionFromHistory: (id: string) => void;
-  deleteSessionFromHistory: (id: string) => void;
-  runVerification: () => Promise<void>;
-  generateCorrection: (options?: { forceSimulation?: boolean }) => Promise<void>;
-}
-
-
-
-const DEFAULT_SESSION: AuditSession = {
-  id: `session-${Date.now()}`,
-  title: 'Untitled Audit',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  originalAnswer: '',
-  wordCount: 0,
-  charCount: 0,
-  documents: [],
-  status: 'draft',
-};
-
-const AuditContext = createContext<AuditContextType | undefined>(undefined);
-
-const STORAGE_KEY_HISTORY = 'secondopinion_history_v1';
-const STORAGE_KEY_CURRENT = 'secondopinion_current_session_v1';
+const STORAGE_KEY_HISTORY = 'secondopinion_history_v2';
+const STORAGE_KEY_CURRENT = 'secondopinion_current_session_v2';
 
 export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('new-audit');
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('dashboard');
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [isGeneratingCorrection, setIsGeneratingCorrection] = useState<boolean>(false);
   const [correctionError, setCorrectionError] = useState<CorrectionErrorState | null>(null);
   const [isCorrectionModalOpen, setIsCorrectionModalOpen] = useState<boolean>(false);
-  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
   const [claimFilter, setClaimFilter] = useState<ClaimFilterType>('all');
   
   // Load initial session from localStorage or use default
@@ -90,10 +35,46 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return JSON.parse(saved);
       }
     } catch {
-
       // Fallback
     }
-    return DEFAULT_SESSION;
+    // Default to the rich EMPEROR-Preserved scenario for immediate wow factor
+    const defaultPreset = SAMPLE_PRESETS[0];
+    const words = defaultPreset.originalAnswer.trim().split(/\s+/).length;
+    return {
+      id: 'session-demo-emp',
+      title: defaultPreset.name,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      originalAnswer: defaultPreset.originalAnswer,
+      wordCount: words,
+      charCount: defaultPreset.originalAnswer.length,
+      documents: [{
+        id: 'doc-sample-1',
+        name: defaultPreset.documentName,
+        size: defaultPreset.documentSize,
+        type: 'application/pdf',
+        uploadedAt: new Date().toISOString(),
+        uploadProgress: 100,
+        status: 'ready',
+        statusMessage: 'Ready for audit verification',
+        pageCount: defaultPreset.documentPages,
+        extractedText: defaultPreset.extractedText,
+        pages: [
+          { pageNumber: 1, text: defaultPreset.extractedText.slice(0, 400), charCount: 400 },
+          { pageNumber: 2, text: defaultPreset.extractedText.slice(400, 1000), charCount: 600 },
+        ],
+        isSimulated: true,
+      }],
+      status: 'completed',
+      sampleType: defaultPreset.domain,
+      verificationResult: defaultPreset.verificationResult,
+      correctionResult: defaultPreset.correctionResult,
+      selectedClaimId: defaultPreset.verificationResult.claims[0]?.id,
+    };
+  });
+
+  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(() => {
+    return currentSession.verificationResult?.claims[0]?.id || null;
   });
 
   // History list
@@ -110,24 +91,38 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       {
         id: 'hist-demo-1',
         title: 'EMPEROR-Preserved HFpEF Clinical Audit',
-        createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
         documentCount: 1,
         wordCount: 172,
         status: 'completed',
         verifiedClaimsCount: 6,
         flaggedClaimsCount: 3,
         truthfulnessScore: 33,
+        hasCorrection: true,
       },
       {
         id: 'hist-demo-2',
         title: 'EU AI Act High-Risk Requirements Audit',
-        createdAt: new Date(Date.now() - 3600000 * 28).toISOString(),
+        createdAt: new Date(Date.now() - 3600000 * 16).toISOString(),
         documentCount: 1,
         wordCount: 114,
         status: 'completed',
         verifiedClaimsCount: 5,
         flaggedClaimsCount: 1,
         truthfulnessScore: 60,
+        hasCorrection: true,
+      },
+      {
+        id: 'hist-demo-3',
+        title: 'NVIDIA Q3 FY25 SEC 10-Q Financial Audit',
+        createdAt: new Date(Date.now() - 3600000 * 28).toISOString(),
+        documentCount: 1,
+        wordCount: 145,
+        status: 'completed',
+        verifiedClaimsCount: 5,
+        flaggedClaimsCount: 3,
+        truthfulnessScore: 40,
+        hasCorrection: true,
       }
     ];
   });
@@ -136,7 +131,7 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isCheckingBackend, setIsCheckingBackend] = useState<boolean>(false);
 
   // Check backend health on mount
-  const checkBackendStatus = async () => {
+  const checkBackendStatus = useCallback(async () => {
     setIsCheckingBackend(true);
     try {
       const health = await api.checkHealth();
@@ -152,10 +147,27 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } finally {
       setIsCheckingBackend(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    checkBackendStatus();
+    let isMounted = true;
+    api.checkHealth().then((health) => {
+      if (isMounted) setBackendHealth(health);
+    }).catch(() => {
+      if (isMounted) {
+        setBackendHealth({
+          status: 'error',
+          service: 'secondopinion-backend',
+          version: '0.1.0',
+          parserAvailable: false,
+          provider: 'unconfigured',
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Persist currentSession to localStorage
@@ -175,15 +187,6 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       // Ignore
     }
   }, [history]);
-
-  // Automatically select the first claim when verification results change
-  useEffect(() => {
-    if (currentSession.verificationResult?.claims?.length) {
-      if (!selectedClaimId || !currentSession.verificationResult.claims.some(c => c.id === selectedClaimId)) {
-        setSelectedClaimId(currentSession.verificationResult.claims[0].id);
-      }
-    }
-  }, [currentSession.verificationResult, selectedClaimId]);
 
   const updateOriginalAnswer = (text: string) => {
     const trimmed = text.trim();
@@ -272,6 +275,8 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       isSimulated: true,
     };
 
+    const firstClaimId = preset.verificationResult.claims[0]?.id || null;
+
     const newSession: AuditSession = {
       id: `session-${Date.now()}`,
       title: preset.name,
@@ -285,11 +290,11 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       sampleType: preset.domain,
       verificationResult: preset.verificationResult,
       correctionResult: preset.correctionResult,
-      selectedClaimId: preset.verificationResult.claims[0]?.id,
+      selectedClaimId: firstClaimId || undefined,
     };
 
     setCurrentSession(newSession);
-    setSelectedClaimId(preset.verificationResult.claims[0]?.id || null);
+    setSelectedClaimId(firstClaimId);
 
     setHistory(prev => [
       {
@@ -304,7 +309,7 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         truthfulnessScore: preset.verificationResult.summary.truthfulnessScore,
         hasCorrection: true,
       },
-      ...prev.slice(0, 9)
+      ...prev.filter(h => h.id !== newSession.id).slice(0, 8)
     ]);
   };
 
@@ -396,7 +401,6 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         isRateLimited: status === 429,
         details: err?.details ? String(err.details) : undefined,
       });
-      // Completed audit and verified claims are fully preserved
     } finally {
       setIsGeneratingCorrection(false);
     }
@@ -415,6 +419,8 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         docIds
       );
 
+      const firstClaimId = result.claims.length > 0 ? result.claims[0].id : null;
+
       setCurrentSession(prev => ({
         ...prev,
         verificationResult: result,
@@ -422,9 +428,7 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         updatedAt: new Date().toISOString(),
       }));
 
-      if (result.claims.length > 0) {
-        setSelectedClaimId(result.claims[0].id);
-      }
+      setSelectedClaimId(firstClaimId);
     } finally {
       setIsVerifying(false);
     }
@@ -459,6 +463,22 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setHistory(prev => prev.filter(h => h.id !== id));
   };
 
+  // Keyboard and index navigation
+  const claims = currentSession.verificationResult?.claims || [];
+  const currentClaimIndex = claims.findIndex(c => c.id === selectedClaimId);
+
+  const goToNextClaim = () => {
+    if (claims.length === 0) return;
+    const nextIdx = currentClaimIndex < claims.length - 1 ? currentClaimIndex + 1 : 0;
+    setSelectedClaimId(claims[nextIdx].id);
+  };
+
+  const goToPrevClaim = () => {
+    if (claims.length === 0) return;
+    const prevIdx = currentClaimIndex > 0 ? currentClaimIndex - 1 : claims.length - 1;
+    setSelectedClaimId(claims[prevIdx].id);
+  };
+
   return (
     <AuditContext.Provider
       value={{
@@ -479,6 +499,8 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setSelectedClaimId,
         claimFilter,
         setClaimFilter,
+        goToNextClaim,
+        goToPrevClaim,
         checkBackendStatus,
         updateOriginalAnswer,
         addDocument,
@@ -498,10 +520,4 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   );
 };
 
-export const useAudit = (): AuditContextType => {
-  const context = useContext(AuditContext);
-  if (!context) {
-    throw new Error('useAudit must be used within an AuditProvider');
-  }
-  return context;
-};
+export type { ScreenType, ClaimFilterType, CorrectionErrorState, AuditContextType } from './auditContextDef';

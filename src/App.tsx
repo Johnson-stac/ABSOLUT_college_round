@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { AuditProvider, useAudit } from './context/AuditContext';
+import { AuditProvider } from './context/AuditContext';
+import { useAudit } from './context/useAudit';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopNav } from './components/layout/TopNav';
 import { DashboardView } from './views/DashboardView';

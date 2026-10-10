@@ -3,9 +3,12 @@ import {
   ArrowLeft, 
   Eye, 
   ShieldAlert,
-  Sparkles
+  Sparkles,
+  Download,
+  ChevronRight
 } from 'lucide-react';
-import { useAudit } from '../context/AuditContext';
+import { useAudit } from '../context/useAudit';
+import { api } from '../services/api';
 import { ClaimNavigationHeader } from '../components/workspace/ClaimNavigationHeader';
 import { AnnotatedAnswerReader } from '../components/workspace/AnnotatedAnswerReader';
 import { ClaimEvidenceInspector } from '../components/workspace/ClaimEvidenceInspector';
@@ -23,17 +26,35 @@ export const AuditWorkspaceView: React.FC = () => {
     selectedClaimId, 
     isVerifying,
     runVerification,
-    openCorrectionModal
+    openCorrectionModal,
+    goToNextClaim,
+    goToPrevClaim
   } = useAudit();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [showRawPdfModal, setShowRawPdfModal] = useState(false);
   const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
 
-
   useEffect(() => {
     return animatePageEntry(containerRef.current);
   }, []);
+
+  // Keyboard navigation shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement as HTMLElement)?.tagName;
+      if (['INPUT', 'TEXTAREA'].includes(activeTag)) return;
+
+      if (e.key === 'j') {
+        goToNextClaim();
+      } else if (e.key === 'k') {
+        goToPrevClaim();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNextClaim, goToPrevClaim]);
 
   // If session has answer and documents but no verification result, auto-trigger verification
   useEffect(() => {
@@ -43,23 +64,31 @@ export const AuditWorkspaceView: React.FC = () => {
       !currentSession.verificationResult &&
       !isVerifying
     ) {
-      runVerification();
+      void runVerification();
     }
   }, [currentSession.originalAnswer, currentSession.documents.length, currentSession.verificationResult, isVerifying, runVerification]);
 
-  // Open mobile drawer when claim is selected on small screens
-  useEffect(() => {
-    if (selectedClaimId && window.innerWidth < 1024) {
-      setIsMobileInspectorOpen(true);
-    }
-  }, [selectedClaimId]);
-
   const activeDoc = currentSession.documents[0] || null;
+
+  const handleDownloadReport = () => {
+    if (!currentSession.verificationResult) return;
+    const reportData = {
+      reportId: `rep-${Date.now()}`,
+      generatedAt: new Date().toISOString(),
+      session: currentSession,
+      verification: currentSession.verificationResult,
+      correction: currentSession.correctionResult || undefined,
+    };
+    api.downloadReport(reportData, 'markdown');
+  };
+
+  const claims = currentSession.verificationResult?.claims || [];
+  const currentClaim = claims.find(c => c.id === selectedClaimId) || claims[0];
 
   return (
     <div ref={containerRef} className="space-y-6">
       {/* Top Header & Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
         <div>
           <button
             onClick={() => setScreen('new-audit')}
@@ -73,8 +102,8 @@ export const AuditWorkspaceView: React.FC = () => {
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight m-0">
               {currentSession.title}
             </h2>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-              Phase 2 Audit Active
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+              Audit Active
             </span>
           </div>
 
@@ -96,13 +125,24 @@ export const AuditWorkspaceView: React.FC = () => {
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {currentSession.verificationResult && (
-            <button
-              onClick={openCorrectionModal}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{currentSession.correctionResult ? 'Re-generate Correction' : 'Correct with Gemini'}</span>
-            </button>
+            <>
+              <button
+                onClick={openCorrectionModal}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{currentSession.correctionResult ? 'Re-generate Correction' : 'Correct with Gemini'}</span>
+              </button>
+
+              <button
+                onClick={handleDownloadReport}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                title="Download full Markdown Audit Report"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Report</span>
+              </button>
+            </>
           )}
 
           {currentSession.correctionResult && (
@@ -150,16 +190,16 @@ export const AuditWorkspaceView: React.FC = () => {
           <div className="flex items-start gap-2.5">
             <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold">Integration Notice for Teammate: </span>
+              <span className="font-bold">Ground-Truth Verification Engine: </span>
               <span>
-                Displaying high-fidelity verification test data with exact character offset highlighting. The frontend is configured to call your live verification pipeline via <code className="bg-amber-100 px-1 py-0.2 rounded font-mono text-[11px]">POST /api/audits/verify</code>.
+                Auditing claims with sentence-level character alignment against extracted PDF text. Live backend endpoint available via <code className="bg-amber-100 px-1 py-0.2 rounded font-mono text-[11px]">POST /api/audits/verify</code>.
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Phase 2 Claim Navigation & Metrics Header */}
+      {/* Claim Navigation & Metrics Header */}
       <ClaimNavigationHeader />
 
       {/* Main Split-Panel Workspace Grid */}
@@ -171,15 +211,36 @@ export const AuditWorkspaceView: React.FC = () => {
         </div>
 
         {/* RIGHT PANEL: Claim Evidence Inspector (5 cols on desktop) */}
-        <div className="hidden lg:block lg:col-span-5 h-[680px] sticky top-20">
+        <div className="hidden lg:block lg:col-span-5 h-[720px] sticky top-20">
           <ClaimEvidenceInspector />
         </div>
+      </div>
+
+      {/* Mobile Floating Action Pill to inspect currently active claim */}
+      <div className="lg:hidden fixed bottom-4 right-4 left-4 z-30">
+        <button
+          onClick={() => setIsMobileInspectorOpen(true)}
+          className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900 text-white shadow-xl border border-slate-700 text-xs font-semibold cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <span className="font-mono bg-blue-600 px-1.5 py-0.5 rounded text-[11px]">
+              C{currentClaim?.claimNumber || 1}
+            </span>
+            <span className="truncate max-w-[200px]">
+              Inspect Evidence & Citations
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-slate-300">
+            <span>View Inspector</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </button>
       </div>
 
       {/* Mobile Drawer/Modal for Claim Evidence Inspector */}
       {isMobileInspectorOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 lg:hidden"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 lg:hidden"
           onClick={() => setIsMobileInspectorOpen(false)}
         >
           <div 
@@ -194,7 +255,7 @@ export const AuditWorkspaceView: React.FC = () => {
         </div>
       )}
 
-      {/* Phase 4 Evidence-Grounded Correction Result Preview (when generated) */}
+      {/* Evidence-Grounded Correction Result Preview (when generated) */}
       {currentSession.correctionResult && (
         <div className="mt-8">
           <CorrectionResultView correction={currentSession.correctionResult} />
@@ -209,7 +270,7 @@ export const AuditWorkspaceView: React.FC = () => {
         />
       )}
 
-      {/* Phase 4 Generate Correction Modal */}
+      {/* Generate Correction Modal */}
       <GenerateCorrectionModal />
 
     </div>

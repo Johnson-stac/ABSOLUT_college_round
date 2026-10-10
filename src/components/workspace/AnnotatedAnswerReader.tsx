@@ -7,19 +7,23 @@ import {
   HelpCircle, 
   AlertOctagon,
   Copy,
-  Check
+  Check,
+  BrainCircuit,
+  ShieldAlert
 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
 import { ClaimLegend } from './ClaimLegend';
 import { validateAndAlignClaims, buildTextSegments } from '../../utils/claimOffsets';
-import type { ClaimVerdict } from '../../types/audit';
+import type { ClaimVerdict, VerifiedClaim } from '../../types/audit';
 
 export const AnnotatedAnswerReader: React.FC = () => {
   const { 
     currentSession, 
     selectedClaimId, 
     setSelectedClaimId, 
-    claimFilter 
+    claimFilter,
+    goToNextClaim,
+    goToPrevClaim 
   } = useAudit();
 
   const [copiedAnswer, setCopiedAnswer] = React.useState(false);
@@ -27,11 +31,11 @@ export const AnnotatedAnswerReader: React.FC = () => {
   const claimRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   const originalText = currentSession.originalAnswer || '';
-  const rawClaims = currentSession.verificationResult?.claims || [];
+  const rawClaims = currentSession.verificationResult?.claims;
 
-  // Align and validate claim character offsets
+  // Align and validate claim character offsets (stable dependency)
   const alignedClaims = useMemo(() => {
-    return validateAndAlignClaims(originalText, rawClaims);
+    return validateAndAlignClaims(originalText, rawClaims || []);
   }, [originalText, rawClaims]);
 
   // Build segmented render tokens
@@ -55,44 +59,39 @@ export const AnnotatedAnswerReader: React.FC = () => {
     setTimeout(() => setCopiedAnswer(false), 2000);
   };
 
-  // Previous and Next claim navigation
   const currentIndex = alignedClaims.findIndex(c => c.id === selectedClaimId);
 
-  const handlePrev = () => {
-    if (alignedClaims.length === 0) return;
-    const nextIdx = currentIndex > 0 ? currentIndex - 1 : alignedClaims.length - 1;
-    setSelectedClaimId(alignedClaims[nextIdx].id);
+  // Helper styles based on verdict & filter
+  const isClaimFilteredOut = (claim: VerifiedClaim): boolean => {
+    if (claimFilter === 'all') return false;
+    if (claimFilter === 'hallucinations') return claim.errorCategory !== 'hallucinated_fact';
+    if (claimFilter === 'reasoning_flaws') return !claim.reasoningCheck?.hasLogicalFlaw && claim.errorCategory !== 'logical_inconsistency';
+    if (claimFilter === 'safety_risks') return claim.safetyRisk !== 'critical' && claim.safetyRisk !== 'moderate' && claim.errorCategory !== 'unsafe_recommendation';
+    return claim.verdict !== claimFilter;
   };
 
-  const handleNext = () => {
-    if (alignedClaims.length === 0) return;
-    const nextIdx = currentIndex < alignedClaims.length - 1 ? currentIndex + 1 : 0;
-    setSelectedClaimId(alignedClaims[nextIdx].id);
-  };
-
-  // Helper styles based on verdict
   const getVerdictStyles = (verdict: ClaimVerdict, isSelected: boolean, isFilteredOut: boolean) => {
     if (isFilteredOut) {
-      return 'opacity-35 grayscale-[50%] bg-slate-100 text-slate-500 border-slate-200';
+      return 'opacity-30 grayscale-[70%] bg-slate-100 text-slate-500 border-slate-200';
     }
 
     switch (verdict) {
       case 'supported':
         return isSelected
-          ? 'bg-emerald-100 text-emerald-950 border-b-2 border-emerald-600 ring-2 ring-emerald-500 ring-offset-1 shadow-xs'
-          : 'bg-emerald-50/90 text-emerald-900 border-b-2 border-emerald-400 hover:bg-emerald-100/80';
+          ? 'bg-emerald-100/95 text-emerald-950 border-b-2 border-emerald-600 ring-2 ring-emerald-500 ring-offset-1 shadow-sm'
+          : 'bg-emerald-50/90 text-emerald-950 border-b-2 border-emerald-400 hover:bg-emerald-100/80';
       case 'refuted':
         return isSelected
-          ? 'bg-rose-100 text-rose-950 border-b-2 border-rose-600 ring-2 ring-rose-500 ring-offset-1 shadow-xs'
-          : 'bg-rose-50/90 text-rose-900 border-b-2 border-rose-400 hover:bg-rose-100/80';
+          ? 'bg-rose-100/95 text-rose-950 border-b-2 border-rose-600 ring-2 ring-rose-500 ring-offset-1 shadow-sm'
+          : 'bg-rose-50/90 text-rose-950 border-b-2 border-rose-400 hover:bg-rose-100/80';
       case 'insufficient_evidence':
         return isSelected
-          ? 'bg-amber-100 text-amber-950 border-b-2 border-amber-600 ring-2 ring-amber-500 ring-offset-1 shadow-xs'
-          : 'bg-amber-50/90 text-amber-900 border-b-2 border-amber-400 hover:bg-amber-100/80';
+          ? 'bg-amber-100/95 text-amber-950 border-b-2 border-amber-600 ring-2 ring-amber-500 ring-offset-1 shadow-sm'
+          : 'bg-amber-50/90 text-amber-950 border-b-2 border-amber-400 hover:bg-amber-100/80';
       case 'ambiguous':
         return isSelected
-          ? 'bg-purple-100 text-purple-950 border-b-2 border-purple-600 ring-2 ring-purple-500 ring-offset-1 shadow-xs'
-          : 'bg-purple-50/90 text-purple-900 border-b-2 border-purple-400 hover:bg-purple-100/80';
+          ? 'bg-purple-100/95 text-purple-950 border-b-2 border-purple-600 ring-2 ring-purple-500 ring-offset-1 shadow-sm'
+          : 'bg-purple-50/90 text-purple-950 border-b-2 border-purple-400 hover:bg-purple-100/80';
       default:
         return 'bg-slate-100 text-slate-800';
     }
@@ -101,29 +100,29 @@ export const AnnotatedAnswerReader: React.FC = () => {
   const getVerdictIcon = (verdict: ClaimVerdict) => {
     switch (verdict) {
       case 'supported':
-        return <CheckCircle2 className="w-3 h-3 text-emerald-700 shrink-0 inline ml-1" />;
+        return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0 inline ml-1 align-middle" />;
       case 'refuted':
-        return <XCircle className="w-3 h-3 text-rose-700 shrink-0 inline ml-1" />;
+        return <XCircle className="w-3.5 h-3.5 text-rose-700 shrink-0 inline ml-1 align-middle" />;
       case 'insufficient_evidence':
-        return <HelpCircle className="w-3 h-3 text-amber-700 shrink-0 inline ml-1" />;
+        return <HelpCircle className="w-3.5 h-3.5 text-amber-700 shrink-0 inline ml-1 align-middle" />;
       case 'ambiguous':
-        return <AlertOctagon className="w-3 h-3 text-purple-700 shrink-0 inline ml-1" />;
+        return <AlertOctagon className="w-3.5 h-3.5 text-purple-700 shrink-0 inline ml-1 align-middle" />;
     }
   };
 
   return (
-    <div className="surface-card rounded-xl p-5 sm:p-6 bg-white border border-slate-200 flex flex-col h-full">
+    <div className="surface-card rounded-2xl p-5 sm:p-6 bg-white border border-slate-200/90 flex flex-col h-full shadow-xs">
       {/* Top Controls Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-600" />
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
             <h3 className="text-base font-bold text-slate-900 m-0">
               Annotated AI-Generated Answer
             </h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Click any highlighted statement to inspect primary evidence and citations.
+            Claim-level precision • Click any highlighted statement to inspect citations and evidence.
           </p>
         </div>
 
@@ -132,8 +131,8 @@ export const AnnotatedAnswerReader: React.FC = () => {
           {alignedClaims.length > 0 && (
             <div className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg text-xs font-medium text-slate-700">
               <button
-                onClick={handlePrev}
-                title="Previous claim (Left arrow)"
+                onClick={goToPrevClaim}
+                title="Previous claim (Left arrow / k)"
                 className="p-1 rounded hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -142,8 +141,8 @@ export const AnnotatedAnswerReader: React.FC = () => {
                 {currentIndex !== -1 ? `C${currentIndex + 1} of ${alignedClaims.length}` : `${alignedClaims.length} claims`}
               </span>
               <button
-                onClick={handleNext}
-                title="Next claim (Right arrow)"
+                onClick={goToNextClaim}
+                title="Next claim (Right arrow / j)"
                 className="p-1 rounded hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -182,7 +181,7 @@ export const AnnotatedAnswerReader: React.FC = () => {
 
           const claim = segment.claim;
           const isSelected = claim.id === selectedClaimId;
-          const isFilteredOut = claimFilter !== 'all' && claim.verdict !== claimFilter;
+          const isFilteredOut = isClaimFilteredOut(claim);
           const verdictStyles = getVerdictStyles(claim.verdict, isSelected, isFilteredOut);
 
           return (
@@ -204,17 +203,17 @@ export const AnnotatedAnswerReader: React.FC = () => {
               }}
               title={`C${claim.claimNumber} • ${claim.verdict.toUpperCase()}${claim.confidence ? ` (${Math.round(claim.confidence * 100)}% conf)` : ''} - Click to inspect`}
               className={`
-                relative inline rounded-sm px-1 py-0.5 mx-0.5 transition-all duration-150 cursor-pointer outline-none group
+                relative inline rounded px-1.5 py-0.5 mx-0.5 transition-all duration-150 cursor-pointer outline-none group
                 ${verdictStyles}
               `}
             >
               {/* Claim Number Badge */}
               <span className={`
-                inline-flex items-center text-[10px] font-mono font-bold px-1 py-0.2 rounded mr-1 align-baseline
-                ${claim.verdict === 'supported' ? 'bg-emerald-200 text-emerald-800' : ''}
-                ${claim.verdict === 'refuted' ? 'bg-rose-200 text-rose-800' : ''}
-                ${claim.verdict === 'insufficient_evidence' ? 'bg-amber-200 text-amber-800' : ''}
-                ${claim.verdict === 'ambiguous' ? 'bg-purple-200 text-purple-800' : ''}
+                inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.2 rounded mr-1.5 align-baseline
+                ${claim.verdict === 'supported' ? 'bg-emerald-200 text-emerald-900' : ''}
+                ${claim.verdict === 'refuted' ? 'bg-rose-200 text-rose-900' : ''}
+                ${claim.verdict === 'insufficient_evidence' ? 'bg-amber-200 text-amber-900' : ''}
+                ${claim.verdict === 'ambiguous' ? 'bg-purple-200 text-purple-900' : ''}
               `}>
                 C{claim.claimNumber}
               </span>
@@ -222,7 +221,17 @@ export const AnnotatedAnswerReader: React.FC = () => {
               {/* The Text */}
               <span>{claim.text}</span>
 
-              {/* Status Icon */}
+              {/* Status and Diagnostic Icons */}
+              {claim.safetyRisk === 'critical' && (
+                <span title="Critical Safety Risk Alert" className="inline-flex items-center ml-1 align-middle">
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-600 animate-pulse" />
+                </span>
+              )}
+              {claim.reasoningCheck?.hasLogicalFlaw && (
+                <span title="Logical Inconsistency Detected" className="inline-flex items-center ml-1 align-middle">
+                  <BrainCircuit className="w-3.5 h-3.5 text-indigo-600" />
+                </span>
+              )}
               {getVerdictIcon(claim.verdict)}
             </mark>
           );

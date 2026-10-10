@@ -9,7 +9,7 @@ import {
   Info,
   ChevronDown
 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
 import { SAMPLE_PRESETS } from '../../data/sampleAnswers';
 
 export const AnswerEditor: React.FC = () => {

@@ -3,7 +3,7 @@ import {
   ArrowRight, 
   CheckCircle2
 } from 'lucide-react';
-import { useAudit } from '../context/AuditContext';
+import { useAudit } from '../context/useAudit';
 import { AnswerEditor } from '../components/workspace/AnswerEditor';
 import { DocumentUploadZone } from '../components/workspace/DocumentUploadZone';
 import { animatePageEntry } from '../utils/animations';

@@ -9,8 +9,8 @@ import {
   Server,
   Sparkles
 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
-import type { ScreenType } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
+import type { ScreenType } from '../../context/auditContextDef';
 
 interface SidebarProps {
   isOpen: boolean;

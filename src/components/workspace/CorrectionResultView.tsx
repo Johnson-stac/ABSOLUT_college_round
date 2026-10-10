@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Copy, Check, ArrowRight } from 'lucide-react';
 import type { CorrectedAnswerResult } from '../../types/audit';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
 
 interface Props {
   correction: CorrectedAnswerResult;

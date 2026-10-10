@@ -6,7 +6,7 @@ import {
   FileCheck2,
   ChevronRight
 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '../../context/useAudit';
 
 interface TopNavProps {
   onToggleSidebar: () => void;
@@ -60,10 +60,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onToggleSidebar }) => {
       {/* Right: Backend indicator & Actions */}
       <div className="flex items-center gap-3">
         {/* Backend Connectivity Status Pill */}
-        <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs">
-          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200/90 text-xs">
+          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
           <span className="text-slate-600 font-medium">
-            {isConnected ? 'API :8000 Live' : 'API Standby (Local Mock Active)'}
+            {isConnected ? 'Backend :8000 Live' : 'Backend Standby (Client Engine)'}
           </span>
           <button
             onClick={checkBackendStatus}
