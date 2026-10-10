@@ -21,6 +21,9 @@ export interface CorrectionErrorState {
 export interface AuditContextType {
   currentScreen: ScreenType;
   setScreen: (screen: ScreenType) => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+  setTheme: (theme: 'light' | 'dark') => void;
   currentSession: AuditSession;
   history: AuditHistorySummary[];
   backendHealth: BackendHealthResponse | null;

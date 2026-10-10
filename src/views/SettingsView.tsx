@@ -339,7 +339,7 @@ Return a structured response conforming to the validated JSON schema containing:
               <pre className="m-0 leading-relaxed">{`{
   "audit_id": "audit_84f932",
   "generated_at": "2026-10-10T16:05:00Z",
-  "model_used": "gemini-1.5-pro",
+  "model_used": "gemini-3.8-flash",
   "corrected_answer": "According to the trial publication, Empagliflozin demonstrates...",
   "word_count": 174,
   "retained_claims": [

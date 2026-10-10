@@ -57,7 +57,7 @@ export const ExtractedTextModal: React.FC<ExtractedTextModalProps> = ({ document
                   <>
                     <span>•</span>
                     <span className="text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-medium text-[11px]">
-                      Client Preview / Demo Mode
+                      Client Preview / Local Parser Mode
                     </span>
                   </>
                 )}

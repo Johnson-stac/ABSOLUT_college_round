@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAudit } from '../context/useAudit';
 import { animatePageEntry } from '../utils/animations';
+import { FloatingTypographyField } from '../components/ui/FloatingTypographyField';
 
 export const AuditHistoryView: React.FC = () => {
   const { history, setScreen, loadSessionFromHistory, deleteSessionFromHistory, createNewSession } = useAudit();
@@ -27,12 +28,12 @@ export const AuditHistoryView: React.FC = () => {
   return (
     <div ref={containerRef} className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border-subtle)]">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight m-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight m-0 font-sans">
             Audit Archive & History
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-[var(--text-muted)] mt-1">
             Access previous answers, verified source documents, and historical session logs.
           </p>
         </div>
@@ -51,41 +52,44 @@ export const AuditHistoryView: React.FC = () => {
 
       {/* Search Bar */}
       <div className="relative max-w-md">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           placeholder="Filter audits by title or domain..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-2xs"
+          className="w-full pl-9 pr-4 py-2 rounded-xl border border-[var(--border-subtle)] text-xs sm:text-sm bg-[var(--bg-surface)] text-[var(--text-primary)] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-2xs"
         />
       </div>
 
       {/* History Items Grid */}
       {filteredHistory.length === 0 ? (
-        <div className="surface-card rounded-2xl p-12 text-center bg-white border border-slate-200/90 shadow-xs">
-          <History className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <h4 className="text-sm font-semibold text-slate-700 m-0">No historical audits found</h4>
-          <p className="text-xs text-slate-400 mt-1">Start a new audit or change your filter search terms.</p>
+        <div className="relative overflow-hidden surface-card rounded-2xl p-12 text-center border border-[var(--border-subtle)] min-h-[220px] flex flex-col items-center justify-center">
+          <FloatingTypographyField density="low" motionIntensity="subtle" themeVariant="adaptive" interactive={true} />
+          <div className="relative z-10 pointer-events-auto">
+            <History className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
+            <h4 className="text-sm font-semibold text-[var(--text-primary)] m-0">No historical audits found</h4>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Start a new audit or change your filter search terms.</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
           {filteredHistory.map((item) => (
             <div
               key={item.id}
-              className="surface-card surface-card-hover rounded-2xl p-5 bg-white border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+              className="surface-card surface-card-hover rounded-2xl p-5 border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
             >
               <div className="flex items-start gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-bold text-slate-900 truncate m-0">
+                  <h4 className="text-sm font-bold text-[var(--text-primary)] truncate m-0">
                     {item.title}
                   </h4>
-                  <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-500">
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-[var(--text-muted)]">
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-slate-400" />
+                      <Calendar className="w-3 h-3 text-[var(--text-muted)]" />
                       {new Date(item.createdAt).toLocaleDateString()}
                     </span>
                     <span>•</span>
@@ -110,14 +114,14 @@ export const AuditHistoryView: React.FC = () => {
               <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                 <button
                   onClick={() => loadSessionFromHistory(item.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] hover:bg-blue-500/15 hover:text-blue-600 dark:hover:text-blue-400 text-[var(--text-secondary)] text-xs font-semibold transition-colors cursor-pointer"
                 >
-                  <FileCheck2 className="w-3.5 h-3.5 text-blue-600" />
+                  <FileCheck2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Open in Workspace</span>
                 </button>
                 <button
                   onClick={() => deleteSessionFromHistory(item.id)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
                   title="Delete from history"
                 >
                   <Trash2 className="w-4 h-4" />

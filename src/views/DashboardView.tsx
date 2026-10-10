@@ -14,6 +14,7 @@ import { useAudit } from '../context/useAudit';
 import { SAMPLE_PRESETS } from '../data/sampleAnswers';
 import { animatePageEntry } from '../utils/animations';
 import { AuditMetricsCharts } from '../components/dashboard/AuditMetricsCharts';
+import { FloatingTypographyField } from '../components/ui/FloatingTypographyField';
 
 export const DashboardView: React.FC = () => {
   const { setScreen, history, loadSamplePreset, createNewSession, backendHealth, currentSession } = useAudit();
@@ -30,9 +31,15 @@ export const DashboardView: React.FC = () => {
 
   return (
     <div ref={containerRef} className="space-y-8">
-      {/* Hero Welcome Banner */}
+      {/* Hero Welcome Banner with Floating Typography Field */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-6 sm:p-10 text-white shadow-xl border border-slate-800">
-        <div className="relative z-10 max-w-3xl">
+        <FloatingTypographyField 
+          density="medium" 
+          motionIntensity="normal" 
+          themeVariant="dark-hero" 
+          interactive={true} 
+        />
+        <div className="relative z-10 max-w-3xl pointer-events-auto">
           <div className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-semibold mb-4 backdrop-blur-xs">
             <ShieldCheck className="w-4 h-4 text-blue-400" />
             <span>SecondOpinion • AI Auditing Platform</span>
@@ -40,7 +47,7 @@ export const DashboardView: React.FC = () => {
             <span className="text-slate-300 font-normal">{isConnected ? 'Engine Connected' : 'Fixture/Local Mode'}</span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3 leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3 leading-tight font-sans">
             Audit Another AI with Ground-Truth Evidence
           </h1>
 
@@ -86,36 +93,36 @@ export const DashboardView: React.FC = () => {
 
       {/* Key Architectural Capabilities Pills */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center gap-2 text-blue-600 mb-1">
+        <div className="surface-card rounded-2xl p-4 border border-[var(--border-subtle)] shadow-2xs">
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
             <ShieldCheck className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Claim-Level Verification</span>
           </div>
-          <p className="text-xs text-slate-500 m-0">Exact character offset alignment & token highlighting</p>
+          <p className="text-xs text-[var(--text-muted)] m-0">Exact character offset alignment & token highlighting</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center gap-2 text-rose-600 mb-1">
+        <div className="surface-card rounded-2xl p-4 border border-[var(--border-subtle)] shadow-2xs">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 mb-1">
             <AlertTriangle className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Hallucination Localization</span>
           </div>
-          <p className="text-xs text-slate-500 m-0">Pinpoints conflicting statements with page citations</p>
+          <p className="text-xs text-[var(--text-muted)] m-0">Pinpoints conflicting statements with page citations</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center gap-2 text-indigo-600 mb-1">
+        <div className="surface-card rounded-2xl p-4 border border-[var(--border-subtle)] shadow-2xs">
+          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-1">
             <BrainCircuit className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Reasoning Checks</span>
           </div>
-          <p className="text-xs text-slate-500 m-0">Detects non-sequiturs & ungrounded logical leaps</p>
+          <p className="text-xs text-[var(--text-muted)] m-0">Detects non-sequiturs & ungrounded logical leaps</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center gap-2 text-emerald-600 mb-1">
+        <div className="surface-card rounded-2xl p-4 border border-[var(--border-subtle)] shadow-2xs">
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-1">
             <Scale className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Calibrated Confidence</span>
           </div>
-          <p className="text-xs text-slate-500 m-0">Uncertainty intervals & epistemic caveats</p>
+          <p className="text-xs text-[var(--text-muted)] m-0">Uncertainty intervals & epistemic caveats</p>
         </div>
       </div>
 
@@ -123,12 +130,12 @@ export const DashboardView: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-900 m-0">Live Audit Telemetry & Diagnostics</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Real-time breakdown of grounding verdicts, error categories, and reliability scores.</p>
+            <h3 className="text-base font-bold text-[var(--text-primary)] m-0">Live Audit Telemetry & Diagnostics</h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Real-time breakdown of grounding verdicts, error categories, and reliability scores.</p>
           </div>
           <button
             onClick={() => setScreen('workspace')}
-            className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
           >
             <span>Inspect in Workspace</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -142,8 +149,8 @@ export const DashboardView: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 m-0">One-Click Demonstration Scenarios</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Explore real-world verification across clinical trials, statutory compliance, and SEC financial filings.</p>
+            <h3 className="text-base font-bold text-[var(--text-primary)] m-0">One-Click Demonstration Scenarios</h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Explore real-world verification across clinical trials, statutory compliance, and SEC financial filings.</p>
           </div>
         </div>
 
@@ -151,30 +158,30 @@ export const DashboardView: React.FC = () => {
           {SAMPLE_PRESETS.map((preset) => (
             <div 
               key={preset.id}
-              className="surface-card rounded-2xl p-5 bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all"
+              className="surface-card surface-card-hover rounded-2xl p-5 border border-[var(--border-subtle)] shadow-xs flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
                     {preset.domain}
                   </span>
-                  <span className="text-xs font-mono text-slate-400">{preset.documentPages} pages in PDF</span>
+                  <span className="text-xs font-mono text-[var(--text-muted)]">{preset.documentPages} pages in PDF</span>
                 </div>
 
-                <h4 className="text-sm font-bold text-slate-900 mb-1.5 m-0 leading-snug">{preset.name}</h4>
-                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                <h4 className="text-sm font-bold text-[var(--text-primary)] mb-1.5 m-0 leading-snug">{preset.name}</h4>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-4">
                   {preset.description}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400 truncate max-w-[160px]">{preset.documentName}</span>
+              <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
+                <span className="text-[11px] text-[var(--text-muted)] truncate max-w-[160px]">{preset.documentName}</span>
                 <button
                   onClick={() => {
                     loadSamplePreset(preset.id);
                     setScreen('workspace');
                   }}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-xs font-semibold text-blue-700 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-colors cursor-pointer"
                 >
                   <span>Audit Scenario</span>
                   <ArrowRight className="w-3 h-3" />
@@ -189,22 +196,22 @@ export const DashboardView: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 m-0">Recent Audits</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Audit runs and historical intake records.</p>
+            <h3 className="text-base font-bold text-[var(--text-primary)] m-0">Recent Audits</h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Audit runs and historical intake records.</p>
           </div>
           <button
             onClick={() => setScreen('history')}
-            className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
           >
             <span>View All Archives</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="surface-card rounded-2xl bg-white border border-slate-200/90 overflow-hidden shadow-xs">
+        <div className="surface-card rounded-2xl border border-[var(--border-subtle)] overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+              <thead className="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
                 <tr>
                   <th className="px-5 py-3.5">Audit Title</th>
                   <th className="px-4 py-3.5">Date</th>
@@ -214,38 +221,38 @@ export const DashboardView: React.FC = () => {
                   <th className="px-5 py-3.5 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-secondary)]">
                 {history.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-5 py-4 font-medium text-slate-900 flex items-center gap-2.5">
-                      <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                  <tr key={item.id} className="hover:bg-[var(--bg-subtle)]/70 transition-colors">
+                    <td className="px-5 py-4 font-medium text-[var(--text-primary)] flex items-center gap-2.5">
+                      <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                       <span className="truncate max-w-sm font-semibold">{item.title}</span>
                     </td>
-                    <td className="px-4 py-4 text-slate-500">
+                    <td className="px-4 py-4 text-[var(--text-muted)]">
                       {new Date(item.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-4 text-slate-600 font-medium">
-                      {item.documentCount} PDF source
+                    <td className="px-4 py-4 text-[var(--text-secondary)] font-medium">
+                      {item.documentCount} PDF source{item.documentCount !== 1 ? 's' : ''}
                     </td>
                     <td className="px-4 py-4">
                       {item.truthfulnessScore !== undefined ? (
                         <div className="flex items-center gap-2">
                           <span className={`font-mono font-bold text-xs ${
-                            item.truthfulnessScore >= 70 ? 'text-emerald-700' :
-                            item.truthfulnessScore >= 50 ? 'text-amber-700' : 'text-rose-700'
+                            item.truthfulnessScore >= 70 ? 'text-emerald-700 dark:text-emerald-400' :
+                            item.truthfulnessScore >= 50 ? 'text-amber-700 dark:text-amber-400' : 'text-rose-700 dark:text-rose-400'
                           }`}>
                             {item.truthfulnessScore}%
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-[var(--text-muted)]">
                             ({item.flaggedClaimsCount || 0} flagged)
                           </span>
                         </div>
                       ) : (
-                        <span className="text-slate-400">Pending</span>
+                        <span className="text-[var(--text-muted)]">Pending</span>
                       )}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                         Completed
                       </span>
                     </td>
@@ -257,7 +264,7 @@ export const DashboardView: React.FC = () => {
                           loadSamplePreset(presetId);
                           setScreen('workspace');
                         }}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
+                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                       >
                         Inspect
                       </button>

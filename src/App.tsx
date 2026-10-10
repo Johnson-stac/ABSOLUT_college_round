@@ -34,7 +34,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex">
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] flex transition-colors duration-200">
       {/* Sidebar (Desktop fixed, Mobile off-canvas) */}
       <Sidebar 
         isOpen={isSidebarOpenMobile} 
