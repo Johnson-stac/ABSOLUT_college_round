@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useAudit } from '../context/useAudit';
 import { animatePageEntry } from '../utils/animations';
-import { FloatingTypographyField } from '../components/ui/FloatingTypographyField';
 
 export const AuditHistoryView: React.FC = () => {
   const { history, setScreen, loadSessionFromHistory, deleteSessionFromHistory, createNewSession } = useAudit();
@@ -64,13 +63,10 @@ export const AuditHistoryView: React.FC = () => {
 
       {/* History Items Grid */}
       {filteredHistory.length === 0 ? (
-        <div className="relative overflow-hidden surface-card rounded-2xl p-12 text-center border border-[var(--border-subtle)] min-h-[220px] flex flex-col items-center justify-center">
-          <FloatingTypographyField density="low" motionIntensity="subtle" themeVariant="adaptive" interactive={true} />
-          <div className="relative z-10 pointer-events-auto">
-            <History className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
-            <h4 className="text-sm font-semibold text-[var(--text-primary)] m-0">No historical audits found</h4>
-            <p className="text-xs text-[var(--text-muted)] mt-1">Start a new audit or change your filter search terms.</p>
-          </div>
+        <div className="surface-card rounded-2xl p-12 text-center border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col items-center justify-center">
+          <History className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3 opacity-60" />
+          <h4 className="text-sm font-semibold text-[var(--text-primary)] m-0">No historical audits found</h4>
+          <p className="text-xs text-[var(--text-muted)] mt-1">Start a new audit or change your filter search terms.</p>
         </div>
       ) : (
         <div className="space-y-3">

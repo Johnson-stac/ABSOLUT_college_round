@@ -22,9 +22,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onCloseMobile }) => {
 
   const navItems: { id: ScreenType; label: string; icon: React.FC<{ className?: string }>; badge?: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'new-audit', label: 'New Audit', icon: PlusCircle, badge: 'Phase 1' },
+    { id: 'new-audit', label: 'New Audit', icon: PlusCircle },
     { id: 'workspace', label: 'Audit Workspace', icon: BookOpenCheck, badge: currentSession.documents.length > 0 ? `${currentSession.documents.length} doc` : undefined },
-    { id: 'correction', label: 'Corrected Answer', icon: Sparkles, badge: 'Phase 4' },
+    { id: 'correction', label: 'Corrected Answer', icon: Sparkles, badge: currentSession.correctionResult ? 'Ready' : undefined },
     { id: 'history', label: 'Audit History', icon: History },
     { id: 'settings', label: 'Settings & Contract', icon: Settings },
   ];

@@ -7,7 +7,6 @@ import { useAudit } from '../context/useAudit';
 import { AnswerEditor } from '../components/workspace/AnswerEditor';
 import { DocumentUploadZone } from '../components/workspace/DocumentUploadZone';
 import { animatePageEntry } from '../utils/animations';
-import { FloatingTypographyField } from '../components/ui/FloatingTypographyField';
 
 export const NewAuditView: React.FC = () => {
   const { currentSession, setScreen } = useAudit();
@@ -23,27 +22,17 @@ export const NewAuditView: React.FC = () => {
 
   return (
     <div ref={containerRef} className="space-y-6">
-      {/* Page Title & Explanation Header with Subtle Typography Field */}
-      <div className="relative overflow-hidden rounded-2xl p-6 sm:p-7 surface-card border border-[var(--border-subtle)] shadow-xs">
-        <FloatingTypographyField 
-          density="low" 
-          motionIntensity="subtle" 
-          themeVariant="adaptive" 
-          interactive={true} 
-        />
-        <div className="relative z-10 max-w-3xl pointer-events-auto">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-300 uppercase tracking-wider">
-              Phase 1 Intake Workflow
-            </span>
-            <span className="text-[var(--text-muted)] text-xs">•</span>
-            <span className="text-xs text-[var(--text-secondary)] font-medium">Dual-Stream Evidence Grounding</span>
+      {/* Page Title & Explanation Header */}
+      <div className="surface-card rounded-2xl p-5 sm:p-6 border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xs">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-2">
+            Intake Workflow
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight m-0 font-sans">
-            Intake & Evidence Alignment
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] tracking-tight m-0 font-sans">
+            Provide Answer & Ground Truth PDF
           </h2>
-          <p className="text-sm text-[var(--text-secondary)] mt-1.5 leading-relaxed">
-            Input the AI-generated answer alongside supporting ground-truth PDF documentation. SecondOpinion establishes sentence-level claims and parses source evidence before performing verification.
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
+            Enter the AI-generated text or pick a sample preset, then upload the reference document to begin claim-level verification.
           </p>
         </div>
       </div>

@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowLeft, 
   Eye, 
-  ShieldAlert,
-  Sparkles,
-  Download,
+  Sparkles, 
+  Download, 
+  FileText,
+  ListFilter,
+  FileCheck,
   ChevronRight
 } from 'lucide-react';
 import { useAudit } from '../context/useAudit';
@@ -34,12 +36,13 @@ export const AuditWorkspaceView: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showRawPdfModal, setShowRawPdfModal] = useState(false);
   const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
+  const [activeLeftTab, setActiveLeftTab] = useState<'annotated' | 'list'>('annotated');
 
   useEffect(() => {
     return animatePageEntry(containerRef.current);
   }, []);
 
-  // Keyboard navigation shortcuts
+  // Keyboard navigation shortcuts (J = next, K = prev)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeTag = (document.activeElement as HTMLElement)?.tagName;
@@ -56,7 +59,7 @@ export const AuditWorkspaceView: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goToNextClaim, goToPrevClaim]);
 
-  // If session has answer and documents but no verification result, auto-trigger verification
+  // Auto-verify if session has inputs but no results
   useEffect(() => {
     if (
       currentSession.originalAnswer && 
@@ -86,132 +89,140 @@ export const AuditWorkspaceView: React.FC = () => {
   const currentClaim = claims.find(c => c.id === selectedClaimId) || claims[0];
 
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div ref={containerRef} className="space-y-4">
       {/* Top Header & Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
+      <div className="surface-card rounded-2xl p-4 sm:p-5 border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <button
-            onClick={() => setScreen('new-audit')}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors mb-2 cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Intake Editor</span>
-          </button>
-
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight m-0">
-              {currentSession.title}
-            </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-              Audit Active
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setScreen('new-audit')}
+              className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Intake</span>
+            </button>
+            <span className="text-[var(--border-strong)]">•</span>
+            <span className="text-xs text-[var(--text-muted)]">
+              {currentSession.documents[0]?.name || 'No document'}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500">
-            <span>Ground Truth: {currentSession.documents.map(d => d.name).join(', ') || 'No PDFs attached'}</span>
-            <span>•</span>
-            <span>{currentSession.wordCount} words</span>
-            {currentSession.verificationResult?.isSimulated && (
-              <>
-                <span>•</span>
-                <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-                  Client Verification Simulation
-                </span>
-              </>
-            )}
+          <div className="flex items-center gap-2.5 mt-1">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] tracking-tight m-0 font-sans">
+              {currentSession.title}
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+              {currentSession.wordCount} words
+            </span>
           </div>
         </div>
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          {currentSession.verificationResult && (
-            <>
-              <button
-                onClick={openCorrectionModal}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{currentSession.correctionResult ? 'Re-generate Correction' : 'Correct with Gemini'}</span>
-              </button>
+          {activeDoc && (
+            <button
+              onClick={() => setShowRawPdfModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors cursor-pointer"
+              title="Inspect raw extracted PDF text"
+            >
+              <Eye className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+              <span>View Source PDF</span>
+            </button>
+          )}
 
-              <button
-                onClick={handleDownloadReport}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-                title="Download full Markdown Audit Report"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export Report</span>
-              </button>
-            </>
+          {currentSession.verificationResult && (
+            <button
+              onClick={handleDownloadReport}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors cursor-pointer"
+              title="Download full Markdown Audit Report"
+            >
+              <Download className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+              <span>Export</span>
+            </button>
+          )}
+
+          {currentSession.verificationResult && (
+            <button
+              onClick={openCorrectionModal}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{currentSession.correctionResult ? 'Re-correct with Gemini' : 'Correct with Gemini'}</span>
+            </button>
           )}
 
           {currentSession.correctionResult && (
             <button
               onClick={() => setScreen('correction')}
-              className="flex items-center gap-1 px-3 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
             >
-              <span>View Full Correction</span>
+              <FileCheck className="w-3.5 h-3.5" />
+              <span>View Diff</span>
             </button>
           )}
-
-          {activeDoc && (
-            <button
-              onClick={() => setShowRawPdfModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
-              title="Inspect raw extracted PDF text"
-            >
-              <Eye className="w-3.5 h-3.5 text-slate-500" />
-              <span>Inspect Source PDF</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => setScreen('new-audit')}
-            className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
-          >
-            Edit Inputs
-          </button>
 
           <button
             onClick={() => {
               createNewSession();
               setScreen('new-audit');
             }}
-            className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+            className="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] hover:bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors cursor-pointer"
           >
-            New Session
+            New Audit
           </button>
         </div>
       </div>
 
-      {/* Verification Simulation Disclaimer Banner */}
-      {currentSession.verificationResult?.isSimulated && (
-        <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 flex items-start justify-between gap-3 text-xs text-amber-900">
-          <div className="flex items-start gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold">Ground-Truth Verification Engine: </span>
-              <span>
-                Auditing claims with sentence-level character alignment against extracted PDF text. Live backend endpoint available via <code className="bg-amber-100 px-1 py-0.2 rounded font-mono text-[11px]">POST /api/audits/verify</code>.
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Claim Navigation & Metrics Header */}
+      {/* Claim Navigation Header (Compact & High-Signal) */}
       <ClaimNavigationHeader />
 
       {/* Main Split-Panel Workspace Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT PANEL: Original AI-Generated Answer Reader (7 cols on desktop) */}
-        <div className="lg:col-span-7 space-y-4">
-          <AnnotatedAnswerReader />
-          <ClaimSelectorList />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* LEFT PANEL: The AI Answer Canvas (7 cols on desktop) */}
+        <div className="lg:col-span-7 space-y-3">
+          {/* View Tab Switcher: Annotated Reader vs Structured Claims List */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-1 bg-[var(--bg-subtle)] p-1 rounded-xl border border-[var(--border-subtle)]">
+              <button
+                onClick={() => setActiveLeftTab('annotated')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  activeLeftTab === 'annotated'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xs font-semibold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Annotated Text</span>
+              </button>
+
+              <button
+                onClick={() => setActiveLeftTab('list')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  activeLeftTab === 'list'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xs font-semibold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <ListFilter className="w-3.5 h-3.5" />
+                <span>Claims List ({claims.length})</span>
+              </button>
+            </div>
+
+            <div className="text-[11px] text-[var(--text-muted)] hidden sm:block">
+              Use keys <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] font-mono font-semibold">J</kbd> / <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] font-mono font-semibold">K</kbd> to cycle claims
+            </div>
+          </div>
+
+          {/* Render selected view */}
+          {activeLeftTab === 'annotated' ? (
+            <AnnotatedAnswerReader />
+          ) : (
+            <ClaimSelectorList />
+          )}
         </div>
 
         {/* RIGHT PANEL: Claim Evidence Inspector (5 cols on desktop) */}
-        <div className="hidden lg:block lg:col-span-5 h-[720px] sticky top-20">
+        <div className="hidden lg:block lg:col-span-5 h-[680px] sticky top-20">
           <ClaimEvidenceInspector />
         </div>
       </div>
@@ -244,7 +255,7 @@ export const AuditWorkspaceView: React.FC = () => {
           onClick={() => setIsMobileInspectorOpen(false)}
         >
           <div 
-            className="w-full max-w-lg h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+            className="w-full max-w-lg h-[85vh] bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             <ClaimEvidenceInspector 
@@ -257,7 +268,7 @@ export const AuditWorkspaceView: React.FC = () => {
 
       {/* Evidence-Grounded Correction Result Preview (when generated) */}
       {currentSession.correctionResult && (
-        <div className="mt-8">
+        <div className="mt-6">
           <CorrectionResultView correction={currentSession.correctionResult} />
         </div>
       )}
@@ -272,7 +283,6 @@ export const AuditWorkspaceView: React.FC = () => {
 
       {/* Generate Correction Modal */}
       <GenerateCorrectionModal />
-
     </div>
   );
 };

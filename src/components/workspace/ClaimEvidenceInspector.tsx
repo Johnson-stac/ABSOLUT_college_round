@@ -11,7 +11,6 @@ import {
   ArrowLeft, 
   X, 
   ShieldAlert, 
-  BookOpen,
   BrainCircuit,
   AlertTriangle,
   Scale
@@ -58,11 +57,11 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
 
   if (!selectedClaim) {
     return (
-      <div className="surface-card rounded-2xl p-8 bg-white border border-slate-200/90 flex flex-col items-center justify-center text-center h-full text-slate-400">
-        <BookOpen className="w-10 h-10 text-slate-300 mb-3 stroke-[1.5]" />
-        <h4 className="text-sm font-semibold text-slate-700 m-0">No Claim Selected</h4>
-        <p className="text-xs text-slate-400 mt-1 max-w-xs">
-          Click any highlighted statement in the answer reader to inspect citations, reasoning checks, and source passages.
+      <div className="surface-card rounded-2xl p-8 border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col items-center justify-center text-center h-full text-[var(--text-muted)]">
+        <FileText className="w-10 h-10 mb-3 opacity-40" />
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">No Claim Selected</h3>
+        <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xs">
+          Select any claim in the left panel to inspect evidence passages and verification reasoning.
         </p>
       </div>
     );
@@ -72,29 +71,29 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
     switch (selectedClaim.verdict) {
       case 'supported':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+            <CheckCircle2 className="w-3.5 h-3.5" />
             <span>SUPPORTED</span>
           </span>
         );
       case 'refuted':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
-            <XCircle className="w-3.5 h-3.5 text-rose-700" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+            <XCircle className="w-3.5 h-3.5" />
             <span>REFUTED</span>
           </span>
         );
       case 'insufficient_evidence':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-            <HelpCircle className="w-3.5 h-3.5 text-amber-700" />
-            <span>INSUFFICIENT EVIDENCE</span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>INSUFFICIENT</span>
           </span>
         );
       case 'ambiguous':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300">
-            <AlertOctagon className="w-3.5 h-3.5 text-purple-700" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20">
+            <AlertOctagon className="w-3.5 h-3.5" />
             <span>AMBIGUOUS</span>
           </span>
         );
@@ -107,30 +106,30 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
     switch (selectedClaim.errorCategory) {
       case 'hallucinated_fact':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <AlertTriangle className="w-3 h-3 text-rose-600" />
-            <span>Hallucinated Fact</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
+            <AlertTriangle className="w-3 h-3 text-rose-500" />
+            <span>Hallucination</span>
           </span>
         );
       case 'logical_inconsistency':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <BrainCircuit className="w-3 h-3 text-indigo-600" />
-            <span>Logical Inconsistency</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+            <BrainCircuit className="w-3 h-3 text-indigo-500" />
+            <span>Logic Flaw</span>
           </span>
         );
       case 'unsafe_recommendation':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-800 border border-red-300 animate-pulse">
-            <ShieldAlert className="w-3 h-3 text-red-600" />
-            <span>Unsafe Recommendation</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-700 dark:text-red-300 border border-red-500/20 animate-pulse">
+            <ShieldAlert className="w-3 h-3 text-red-500" />
+            <span>Safety Risk</span>
           </span>
         );
       case 'unsupported_claim':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            <HelpCircle className="w-3 h-3 text-amber-600" />
-            <span>Unsupported Scope</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+            <HelpCircle className="w-3 h-3 text-amber-500" />
+            <span>Unsupported</span>
           </span>
         );
       default:
@@ -143,35 +142,34 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
 
   return (
     <div className={`
-      surface-card rounded-2xl bg-white border border-slate-200/90 flex flex-col h-full overflow-hidden shadow-xs
+      surface-card rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden shadow-2xs
       ${isMobileModal ? 'fixed inset-4 z-50 shadow-2xl max-w-xl mx-auto my-auto max-h-[90vh]' : ''}
     `}>
-      {/* Header with Claim Index, Verdict, and Controls */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
+      {/* 1. Header with Claim Index, Verdict, and Prev/Next */}
+      <div className="p-3.5 sm:p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between gap-3 shrink-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
-            Claim C{selectedClaim.claimNumber}
+          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)]">
+            C{selectedClaim.claimNumber}
           </span>
           {getVerdictBadge()}
           {getErrorCategoryBadge()}
         </div>
 
-        {/* Prev / Next / Close controls */}
         <div className="flex items-center gap-1">
           <button
             onClick={goToPrevClaim}
-            className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-            title="Previous claim"
+            className="p-1 rounded-lg hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+            title="Previous claim (K)"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <span className="text-xs text-slate-400 font-mono px-1">
+          <span className="text-xs text-[var(--text-muted)] font-mono px-1">
             {currentIndex + 1}/{claims.length}
           </span>
           <button
             onClick={goToNextClaim}
-            className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-            title="Next claim"
+            className="p-1 rounded-lg hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+            title="Next claim (J)"
           >
             <ArrowRight className="w-4 h-4" />
           </button>
@@ -179,7 +177,7 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
           {isMobileModal && (
             <button
               onClick={onCloseMobile}
-              className="p-1.5 ml-2 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
+              className="p-1 ml-1 rounded-lg hover:bg-[var(--bg-surface)] text-[var(--text-muted)] transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -187,270 +185,165 @@ export const ClaimEvidenceInspector: React.FC<ClaimEvidenceInspectorProps> = ({
         </div>
       </div>
 
-      {/* Body Content */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-        {/* 1. Exact Claim Text Card */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 relative group">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-            <span>Statement Extracted from AI Output</span>
+      {/* 2. Scrollable Body */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+        {/* Claim Statement Card */}
+        <div className="p-3.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] relative group">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">
+            <span>AI Claim Statement</span>
             <button
               onClick={handleCopyClaim}
-              className="flex items-center gap-1 text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
             >
-              {copiedClaim ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-400" />}
+              {copiedClaim ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
               <span>{copiedClaim ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
-          <p className="text-sm font-medium text-slate-900 leading-relaxed m-0 italic font-sans">
+          <p className="text-xs sm:text-sm font-medium text-[var(--text-primary)] leading-relaxed m-0 italic font-sans">
             "{selectedClaim.text}"
           </p>
         </div>
 
-        {/* 2. Safety Risk Alert (if critical or moderate) */}
+        {/* Safety Risk Alert (if present) */}
         {selectedClaim.safetyRisk && selectedClaim.safetyRisk !== 'none' && (
-          <div className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
-            selectedClaim.safetyRisk === 'critical' 
-              ? 'bg-rose-50/90 border-rose-300 text-rose-950' 
-              : 'bg-amber-50/90 border-amber-300 text-amber-950'
-          }`}>
-            <ShieldAlert className={`w-4 h-4 shrink-0 mt-0.5 ${
-              selectedClaim.safetyRisk === 'critical' ? 'text-rose-600' : 'text-amber-600'
-            }`} />
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-900 dark:text-rose-200 flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold uppercase tracking-wider text-[11px] block">
-                {selectedClaim.safetyRisk} Risk Alert: {selectedClaim.errorCategory === 'unsafe_recommendation' ? 'Potentially Hazardous Instruction' : 'High Risk Error'}
+              <span className="font-bold uppercase tracking-wider text-[10px] block text-rose-700 dark:text-rose-300">
+                {selectedClaim.safetyRisk} Safety Alert
               </span>
-              <p className="m-0 mt-0.5 text-xs opacity-90 leading-normal">
-                This claim contains actionable statements that violate ground truth standards or guidance. It must not be deployed without correction.
+              <p className="m-0 mt-0.5 text-xs opacity-90 leading-tight">
+                Contains recommendations conflicting with primary evidence guidelines.
               </p>
             </div>
           </div>
         )}
 
-        {/* 3. Reasoning Consistency Analysis */}
+        {/* Reasoning Consistency Check (if flawed) */}
         {selectedClaim.reasoningCheck?.hasLogicalFlaw && (
-          <div className="p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-200/90 text-xs text-indigo-950 space-y-1">
-            <div className="font-bold flex items-center gap-1.5 text-indigo-900">
-              <BrainCircuit className="w-4 h-4 text-indigo-600" />
-              <span>Reasoning Consistency Check: {selectedClaim.reasoningCheck.flawType?.replace(/_/g, ' ').toUpperCase()}</span>
+          <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-950 dark:text-indigo-200 space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
+              <BrainCircuit className="w-3.5 h-3.5" />
+              <span>Logic Flaw: {selectedClaim.reasoningCheck.flawType?.replace(/_/g, ' ')}</span>
             </div>
-            <p className="m-0 text-indigo-900/90 leading-normal">
-              {selectedClaim.reasoningCheck.explanation || 'The conclusion stated does not logically follow from the provided evidence premises.'}
+            <p className="m-0 text-xs opacity-90 leading-normal">
+              {selectedClaim.reasoningCheck.explanation || 'Conclusion does not follow from the stated premises.'}
             </p>
           </div>
         )}
 
-        {/* 4. Confidence-Calibrated Reporting */}
-        {selectedClaim.confidenceCalibration && (
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                <Scale className="w-3.5 h-3.5 text-slate-400" />
-                <span>Confidence Calibration</span>
-              </span>
-              <span className="font-mono font-bold text-slate-900">
-                {Math.round(selectedClaim.confidenceCalibration.score * 100)}% Certainty
-              </span>
-            </div>
-            {/* Uncertainty Interval bar */}
-            <div className="space-y-1">
-              <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                <div 
-                  className="bg-blue-600 h-1.5 rounded-full"
-                  style={{ width: `${selectedClaim.confidenceCalibration.score * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                <span>Bound: {selectedClaim.confidenceCalibration.uncertaintyInterval[0]}</span>
-                <span className="capitalize">{selectedClaim.confidenceCalibration.calibrationLevel.replace(/_/g, ' ')}</span>
-                <span>Upper: {selectedClaim.confidenceCalibration.uncertaintyInterval[1]}</span>
-              </div>
-            </div>
-            {selectedClaim.confidenceCalibration.epistemicCaveat && (
-              <p className="text-[11px] text-slate-500 m-0 italic">
-                {selectedClaim.confidenceCalibration.epistemicCaveat}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* 5. Verdict Explanation */}
-        <div className="space-y-1.5">
-          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider m-0">
-            Evidential Justification
-          </h4>
-          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 m-0">
+        {/* Evidential Justification */}
+        <div className="space-y-1">
+          <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">
+            Verification Assessment
+          </span>
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] m-0">
             {selectedClaim.explanation}
           </p>
         </div>
 
-        {/* 6. Insufficient Reason if applicable */}
-        {selectedClaim.verdict === 'insufficient_evidence' && (
-          <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
-            <div className="font-bold flex items-center gap-1.5">
-              <HelpCircle className="w-4 h-4 text-amber-600" />
-              <span>Evidence Boundary Notice</span>
-            </div>
-            <p className="m-0 leading-normal text-amber-800">
-              {selectedClaim.insufficientReason || 'The supplied documents do not contain direct or inferable evidence to substantiate or disprove this statement.'}
-            </p>
-          </div>
-        )}
-
-        {/* 7. Ambiguity Notice */}
-        {selectedClaim.verdict === 'ambiguous' && selectedClaim.ambiguityReason && (
-          <div className="p-3.5 rounded-xl bg-purple-50/80 border border-purple-200 text-xs text-purple-900 space-y-1">
-            <div className="font-bold flex items-center gap-1.5">
-              <AlertOctagon className="w-4 h-4 text-purple-600" />
-              <span>Source Ambiguity Notice</span>
-            </div>
-            <p className="m-0 leading-normal text-purple-800">
-              {selectedClaim.ambiguityReason}
-            </p>
-          </div>
-        )}
-
-        {/* 8. Contradicting Evidence Excerpts */}
+        {/* Contradicting Evidence Excerpts */}
         {hasContradicting && (
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wider m-0 flex items-center gap-1.5">
-              <XCircle className="w-4 h-4 text-rose-600" />
-              <span>Contradicting Ground Truth ({selectedClaim.contradictingEvidence.length})</span>
-            </h4>
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1">
+              <XCircle className="w-3.5 h-3.5" />
+              <span>Contradicting Evidence ({selectedClaim.contradictingEvidence.length})</span>
+            </span>
 
             {selectedClaim.contradictingEvidence.map((ev) => (
               <div 
                 key={ev.id}
-                className="p-4 rounded-xl bg-rose-50/70 border border-rose-200 shadow-2xs space-y-2.5"
+                className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/5 space-y-2"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-rose-200/60 pb-2">
-                  <div className="flex items-center gap-1.5 font-medium text-rose-900">
-                    <FileText className="w-3.5 h-3.5 text-rose-600" />
-                    <span className="font-semibold">{ev.source.documentName}</span>
-                    {ev.source.pageNumber && (
-                      <span className="text-[11px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-bold">
-                        Page {ev.source.pageNumber}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {ev.source.relevanceScore && (
-                      <span className="text-[10px] font-mono text-rose-700 bg-rose-100/80 px-1.5 py-0.2 rounded font-bold">
-                        {Math.round(ev.source.relevanceScore * 100)}% match
-                      </span>
-                    )}
-                    <button
-                      onClick={() => handleCopyEvidence(ev)}
-                      className="text-rose-700 hover:text-rose-900 p-1 rounded hover:bg-rose-100 transition-colors cursor-pointer"
-                      title="Copy citation"
-                    >
-                      {copiedEvidenceId === ev.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                    </button>
-                  </div>
-                </div>
-
-                <blockquote className="m-0 pl-3 border-l-2 border-rose-400 font-mono text-xs text-rose-950 leading-relaxed whitespace-pre-wrap">
+                <p className="text-xs text-[var(--text-primary)] font-serif italic leading-relaxed m-0">
                   "{ev.text}"
-                </blockquote>
+                </p>
 
-                {ev.source.section && (
-                  <div className="text-[11px] text-rose-700">
-                    Section: <span className="font-medium text-rose-900">{ev.source.section}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] pt-1 border-t border-rose-500/10">
+                  <span className="font-medium truncate max-w-[200px]">
+                    {ev.source.documentName} • p.{ev.source.pageNumber || 1}
+                  </span>
+                  <button
+                    onClick={() => handleCopyEvidence(ev)}
+                    className="flex items-center gap-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                  >
+                    {copiedEvidenceId === ev.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedEvidenceId === ev.id ? 'Copied' : 'Cite'}</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* 9. Supporting Evidence Excerpts */}
+        {/* Supporting Evidence Excerpts */}
         {hasSupporting && (
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider m-0 flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Supporting Ground Truth ({selectedClaim.supportingEvidence.length})</span>
-            </h4>
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Supporting Evidence ({selectedClaim.supportingEvidence.length})</span>
+            </span>
 
             {selectedClaim.supportingEvidence.map((ev) => (
               <div 
                 key={ev.id}
-                className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 shadow-2xs space-y-2.5"
+                className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-2"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-emerald-200/60 pb-2">
-                  <div className="flex items-center gap-1.5 font-medium text-emerald-900">
-                    <FileText className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="font-semibold">{ev.source.documentName}</span>
-                    {ev.source.pageNumber && (
-                      <span className="text-[11px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">
-                        Page {ev.source.pageNumber}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {ev.source.relevanceScore && (
-                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded font-bold">
-                        {Math.round(ev.source.relevanceScore * 100)}% match
-                      </span>
-                    )}
-                    <button
-                      onClick={() => handleCopyEvidence(ev)}
-                      className="text-emerald-700 hover:text-emerald-900 p-1 rounded hover:bg-emerald-100 transition-colors cursor-pointer"
-                      title="Copy citation"
-                    >
-                      {copiedEvidenceId === ev.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                    </button>
-                  </div>
-                </div>
-
-                <blockquote className="m-0 pl-3 border-l-2 border-emerald-400 font-mono text-xs text-emerald-950 leading-relaxed whitespace-pre-wrap">
+                <p className="text-xs text-[var(--text-primary)] font-serif italic leading-relaxed m-0">
                   "{ev.text}"
-                </blockquote>
+                </p>
 
-                {ev.source.section && (
-                  <div className="text-[11px] text-emerald-700">
-                    Section: <span className="font-medium text-emerald-900">{ev.source.section}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] pt-1 border-t border-emerald-500/10">
+                  <span className="font-medium truncate max-w-[200px]">
+                    {ev.source.documentName} • p.{ev.source.pageNumber || 1}
+                  </span>
+                  <button
+                    onClick={() => handleCopyEvidence(ev)}
+                    className="flex items-center gap-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                  >
+                    {copiedEvidenceId === ev.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedEvidenceId === ev.id ? 'Copied' : 'Cite'}</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* 10. Fallback when no direct quotes */}
-        {!hasSupporting && !hasContradicting && (
-          <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-center text-xs text-slate-500 space-y-1">
-            <ShieldAlert className="w-5 h-5 text-slate-400 mx-auto" />
-            <p className="font-semibold text-slate-700 m-0">No Direct Document Citations</p>
-            <p className="text-[11px] text-slate-400 m-0">
-              The verification model did not locate supporting or refuting excerpts for this statement in the uploaded PDF.
+        {/* Insufficient Reason */}
+        {selectedClaim.verdict === 'insufficient_evidence' && (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200">
+            <span className="font-bold block mb-0.5">Evidence Boundary:</span>
+            <p className="m-0 leading-normal opacity-90">
+              {selectedClaim.insufficientReason || 'The supplied documents do not contain direct evidence to substantiate or disprove this statement.'}
             </p>
           </div>
         )}
-      </div>
 
-      {/* Footer Navigation */}
-      <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-xs text-slate-500">
-        <button
-          onClick={goToPrevClaim}
-          className="flex items-center gap-1 font-semibold text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Previous Claim</span>
-        </button>
-
-        <span className="font-mono text-[11px]">
-          Claim {currentIndex + 1} of {claims.length}
-        </span>
-
-        <button
-          onClick={goToNextClaim}
-          className="flex items-center gap-1 font-semibold text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
-        >
-          <span>Next Claim</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        {/* Confidence Calibration Meter */}
+        {selectedClaim.confidenceCalibration && (
+          <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] space-y-1.5 text-xs">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-semibold text-[var(--text-muted)] flex items-center gap-1">
+                <Scale className="w-3 h-3" />
+                <span>Confidence Calibration</span>
+              </span>
+              <span className="font-mono font-bold text-[var(--text-primary)]">
+                {Math.round(selectedClaim.confidenceCalibration.score * 100)}%
+              </span>
+            </div>
+            <div className="w-full bg-[var(--border-subtle)] rounded-full h-1 overflow-hidden">
+              <div 
+                className="bg-blue-600 h-1 rounded-full"
+                style={{ width: `${selectedClaim.confidenceCalibration.score * 100}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-[var(--text-muted)] font-mono">
+              <span>Range: {selectedClaim.confidenceCalibration.uncertaintyInterval[0]} - {selectedClaim.confidenceCalibration.uncertaintyInterval[1]}</span>
+              <span className="capitalize">{selectedClaim.confidenceCalibration.calibrationLevel.replace(/_/g, ' ')}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

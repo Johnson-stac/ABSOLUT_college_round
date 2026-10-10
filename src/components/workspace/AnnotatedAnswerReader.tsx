@@ -111,29 +111,26 @@ export const AnnotatedAnswerReader: React.FC = () => {
   };
 
   return (
-    <div className="surface-card rounded-2xl p-5 sm:p-6 bg-white border border-slate-200/90 flex flex-col h-full shadow-xs">
+    <div className="surface-card rounded-2xl p-4 sm:p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex flex-col h-full shadow-2xs">
       {/* Top Controls Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--border-subtle)] mb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-            <h3 className="text-base font-bold text-slate-900 m-0">
-              Annotated AI-Generated Answer
-            </h3>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Claim-level precision • Click any highlighted statement to inspect citations and evidence.
+          <h3 className="text-sm font-bold text-[var(--text-primary)] m-0">
+            Annotated Answer
+          </h3>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">
+            Click any highlighted statement to inspect citations and evidence.
           </p>
         </div>
 
         {/* Claim Navigation Controls & Copy */}
         <div className="flex items-center gap-2">
           {alignedClaims.length > 0 && (
-            <div className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg text-xs font-medium text-slate-700">
+            <div className="flex items-center gap-1 bg-[var(--bg-subtle)] px-2 py-1 rounded-lg text-xs font-medium text-[var(--text-secondary)] border border-[var(--border-subtle)]">
               <button
                 onClick={goToPrevClaim}
                 title="Previous claim (Left arrow / k)"
-                className="p-1 rounded hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                className="p-1 rounded hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -143,7 +140,7 @@ export const AnnotatedAnswerReader: React.FC = () => {
               <button
                 onClick={goToNextClaim}
                 title="Next claim (Right arrow / j)"
-                className="p-1 rounded hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                className="p-1 rounded hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -152,7 +149,7 @@ export const AnnotatedAnswerReader: React.FC = () => {
 
           <button
             onClick={handleCopyAnswer}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors cursor-pointer"
           >
             {copiedAnswer ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copiedAnswer ? 'Copied' : 'Copy'}</span>
@@ -161,19 +158,19 @@ export const AnnotatedAnswerReader: React.FC = () => {
       </div>
 
       {/* Legend */}
-      <div className="mb-4">
+      <div className="mb-3">
         <ClaimLegend />
       </div>
 
       {/* Main Annotated Text Reader Body */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-y-auto pr-2 font-sans text-sm sm:text-base leading-relaxed text-slate-800 whitespace-pre-wrap selection:bg-blue-100 min-h-[380px]"
+        className="flex-1 overflow-y-auto pr-2 font-sans text-sm sm:text-base leading-relaxed text-[var(--text-primary)] whitespace-pre-wrap selection:bg-blue-100 dark:selection:bg-blue-900/40 min-h-[380px]"
       >
         {segments.map((segment) => {
           if (segment.type === 'text') {
             return (
-              <span key={segment.key} className="text-slate-800">
+              <span key={segment.key} className="text-[var(--text-primary)]">
                 {segment.content}
               </span>
             );
