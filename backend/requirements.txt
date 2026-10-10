@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+PyMuPDF
+scikit-learn
+pandas
+numpy
+transformers
+datasets
+evaluate
+accelerate
+safetensors
+pytest
+httpx
