@@ -25,6 +25,9 @@ export interface CorrectionErrorState {
 interface AuditContextType {
   currentScreen: ScreenType;
   setScreen: (screen: ScreenType) => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+  setTheme: (theme: 'light' | 'dark') => void;
   currentSession: AuditSession;
   history: AuditHistorySummary[];
   backendHealth: BackendHealthResponse | null;
@@ -72,6 +75,7 @@ const AuditContext = createContext<AuditContextType | undefined>(undefined);
 
 const STORAGE_KEY_HISTORY = 'secondopinion_history_v1';
 const STORAGE_KEY_CURRENT = 'secondopinion_current_session_v1';
+const STORAGE_KEY_THEME = 'secondopinion_theme_v1';
 
 export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('new-audit');
@@ -82,6 +86,45 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
   const [claimFilter, setClaimFilter] = useState<ClaimFilterType>('all');
   
+  // Theme state: Ivory (light) vs Graphite (dark)
+  const [theme, setThemeState] = useState<'light' | 'dark'>(() => {
+    try {
+      const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        return savedTheme;
+      }
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    } catch {
+      // Fallback
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_THEME, theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch {
+      // Ignored
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setThemeState(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const setTheme = (newTheme: 'light' | 'dark') => {
+    setThemeState(newTheme);
+  };
+
   // Load initial session from localStorage or use default
   const [currentSession, setCurrentSession] = useState<AuditSession>(() => {
     try {
@@ -90,7 +133,6 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return JSON.parse(saved);
       }
     } catch {
-
       // Fallback
     }
     return DEFAULT_SESSION;
@@ -108,7 +150,7 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
     return [
       {
-        id: 'hist-demo-1',
+        id: 'hist-clinical-1',
         title: 'EMPEROR-Preserved HFpEF Clinical Audit',
         createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
         documentCount: 1,
@@ -119,7 +161,7 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         truthfulnessScore: 33,
       },
       {
-        id: 'hist-demo-2',
+        id: 'hist-regulatory-2',
         title: 'EU AI Act High-Risk Requirements Audit',
         createdAt: new Date(Date.now() - 3600000 * 28).toISOString(),
         documentCount: 1,
@@ -464,6 +506,9 @@ export const AuditProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       value={{
         currentScreen,
         setScreen: setCurrentScreen,
+        theme,
+        toggleTheme,
+        setTheme,
         currentSession,
         history,
         backendHealth,

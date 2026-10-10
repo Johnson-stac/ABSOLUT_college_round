@@ -480,7 +480,7 @@ export const api = {
       : [];
 
     const limitations = raw.limitations || 'Grounding strictly bounded by supplied document evidence.';
-    const modelUsed = raw.modelUsed || raw.model_used || 'gemini-1.5-pro';
+    const modelUsed = raw.modelUsed || raw.model_used || 'gemini-3.8-flash';
     const auditId = raw.auditId || raw.audit_id || fallbackAuditId;
     const wordCount = raw.wordCount || correctedAnswer.trim().split(/\s+/).filter(Boolean).length;
 
@@ -511,7 +511,7 @@ export const api = {
         ...empPreset.correctionResult,
         auditId,
         generatedAt: new Date().toISOString(),
-        modelUsed: 'gemini-1.5-pro (verified clinical test fixture)',
+        modelUsed: 'gemini-3.8-flash (verified clinical test fixture)',
         isSimulated: true,
       };
     }
@@ -522,7 +522,7 @@ export const api = {
         ...euPreset.correctionResult,
         auditId,
         generatedAt: new Date().toISOString(),
-        modelUsed: 'gemini-1.5-pro (verified regulatory test fixture)',
+        modelUsed: 'gemini-3.8-flash (verified regulatory test fixture)',
         isSimulated: true,
       };
     }
@@ -532,7 +532,7 @@ export const api = {
       ...defaultPreset.correctionResult,
       auditId,
       generatedAt: new Date().toISOString(),
-      modelUsed: 'gemini-1.5-pro (sample test fixture)',
+      modelUsed: 'gemini-3.8-flash (sample test fixture)',
       isSimulated: true,
     };
   },
